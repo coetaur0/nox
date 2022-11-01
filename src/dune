@@ -1,0 +1,13 @@
+(include_subdirs unqualified)
+
+(executable
+ (name main)
+ (public_name nox)
+ (modules main)
+ (libraries nox))
+
+(library
+ (name nox)
+ (modules
+  (:standard \ main))
+ (modules_without_implementation token))

@@ -1,0 +1,3 @@
+(tests
+ (names lexer)
+ (libraries nox ounit2))

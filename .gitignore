@@ -1,0 +1,8 @@
+# Opam
+_opam/
+
+# Dune
+_build/
+
+# macOS
+.DS_Store
