@@ -10,4 +10,4 @@
  (name nox)
  (modules
   (:standard \ main))
- (modules_without_implementation token))
+ (modules_without_implementation diagnostic parsetree token))

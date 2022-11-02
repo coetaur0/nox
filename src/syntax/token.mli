@@ -9,6 +9,7 @@ type lexeme =
   | Let
   | If
   | Else
+  | Lam
   | Assign
   | Or
   | And
@@ -27,7 +28,6 @@ type lexeme =
   | RParen
   | LBrace
   | RBrace
-  | Pipe
   | Comma
   | Semicolon
   | Eof

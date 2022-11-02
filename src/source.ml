@@ -1,4 +1,4 @@
-(* ----- Source, position and span ------------------------------------------ *)
+(* ----- Source, position and span -------------------------------------------------------------- *)
 
 type t = {path : string option; content : string}
 
@@ -6,7 +6,7 @@ type position = {line : int; column : int; offset : int}
 
 type span = {left : position; right : position}
 
-(* ----- Source manipulation functions -------------------------------------- *)
+(* ----- Source manipulation functions ---------------------------------------------------------- *)
 
 let make string =
   {path = None; content = string}
@@ -28,3 +28,8 @@ let read source span =
   let start = max 0 (min span.left.offset (length source)) in
   let length = (min span.right.offset (length source)) - start in
   String.sub source.content start length
+
+(* ----- Span manipulation functions ------------------------------------------------------------ *)
+
+let merge lspan rspan =
+  {left = lspan.left; right = rspan.right}

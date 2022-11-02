@@ -1,7 +1,7 @@
 open Nox
 open OUnit2
 
-(* ----- Utility functions -------------------------------------------------- *)
+(* ----- Utility functions ---------------------------------------------------------------------- *)
 
 let check string tokens =
   let source = Source.make string in
@@ -17,15 +17,19 @@ let check string tokens =
   in
   check' tokens
 
-(* ----- Test functions ----------------------------------------------------- *)
+(* ----- Test functions ------------------------------------------------------------------------- *)
+
+let check_comments _ =
+  check "// This is a comment\n// And another one" [(Token.Eof, "")]
 
 let check_keywords _ =
   check
-    "fn let if else"
+    "fn let if else lam"
     [(Token.Fn, "fn");
      (Token.Let, "let");
      (Token.If, "if");
      (Token.Else, "else");
+     (Token.Lam, "lam");
      (Token.Eof, "")]
 
 let check_names _ =
@@ -76,22 +80,22 @@ let check_operators _ =
 
 let check_punctuation _ =
   check
-    "(){}|,;"
+    "(){},;"
     [(Token.LParen, "(");
     (Token.RParen, ")");
     (Token.LBrace, "{");
     (Token.RBrace, "}");
-    (Token.Pipe, "|");
     (Token.Comma, ",");
     (Token.Semicolon, ";");
     (Token.Eof, "")]
 
-(* ----- Tests -------------------------------------------------------------- *)
+(* ----- Tests ---------------------------------------------------------------------------------- *)
 
 let tests =
   "Lexer tests"
   >:::
-  [("Keywords" >:: check_keywords);
+  [("Comments" >:: check_comments);
+   ("Keywords" >:: check_keywords);
    ("Names" >:: check_names);
    ("Numbers" >:: check_numbers);
    ("Booleans" >:: check_booleans);

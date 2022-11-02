@@ -26,3 +26,6 @@ val at : t -> int -> char option
 
 (** [read source span] is the contents of a [source] covered by some [span]. *)
 val read : t -> span -> string
+
+(** [merge lspan rspan] is a new span from [lspan] to [rspan]. *)
+val merge : span -> span -> span
