@@ -81,13 +81,12 @@ let check_invalid_application_expr _ =
   check_errors "f(2" ["1:4..1:4: expect a ')'."]
 
 let check_lambda_expr _ =
-  check "lam() {true}" "lam() {true}";
-  check "lam(x, y) {x + y}" "lam(x, y) {(x + y)}"
+  check "<> {true}" "<> {true}";
+  check "<x, y> {x + y}" "<x, y> {(x + y)}"
 
 let check_invalid_lamba_expr _ =
-  check_errors "lam x) {x}" ["1:5..1:6: expect a '('."];
-  check_errors "lam(x {x}" ["1:7..1:8: expect a ')'."];
-  check_errors "lam(x) x" ["1:8..1:9: expect a '{'."; "1:9..1:9: expect a '}'."]
+  check_errors "<x {x}" ["1:4..1:5: expect a '>'."];
+  check_errors "<x> x" ["1:5..1:6: expect a '{'."; "1:6..1:6: expect a '}'."]
 
 let check_var_expr _ =
   check "x" "x"

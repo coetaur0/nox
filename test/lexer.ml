@@ -24,12 +24,11 @@ let check_comments _ =
 
 let check_keywords _ =
   check
-    "fn let if else lam"
+    "fn let if else"
     [(Token.Fn, "fn");
      (Token.Let, "let");
      (Token.If, "if");
      (Token.Else, "else");
-     (Token.Lam, "lam");
      (Token.Eof, "")]
 
 let check_names _ =

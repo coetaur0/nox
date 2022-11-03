@@ -9,7 +9,6 @@ type lexeme =
   | Let
   | If
   | Else
-  | Lam
   | Assign
   | Or
   | And

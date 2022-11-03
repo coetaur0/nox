@@ -78,7 +78,7 @@ and string_of_expr expr =
     "if " ^ string_of_expr cond ^ " " ^ string_of_expr thn ^ els_string
   | App (callee, args) -> string_of_expr callee ^ "(" ^ string_of_list args string_of_expr "," ^ ")"
   | Lambda (params, body) ->
-    "lam(" ^ string_of_list params (fun x -> x) "," ^ ") " ^ string_of_expr body
+    "<" ^ string_of_list params (fun x -> x) "," ^ "> " ^ string_of_expr body
   | Var x -> x
   | Number num -> string_of_float num
   | Boolean bool -> string_of_bool bool

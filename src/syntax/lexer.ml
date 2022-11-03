@@ -85,7 +85,6 @@ let lex_identifier lexer =
     | "let" -> Token.Let
     | "if" -> Token.If
     | "else" -> Token.Else
-    | "lam" -> Token.Lam
     | "true" | "false" -> Token.Boolean
     | _ -> Token.Name
   in

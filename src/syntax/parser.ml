@@ -170,7 +170,7 @@ and parse_app parser =
 and parse_primary parser =
   match parser.token.kind with
   | Token.LBrace -> parse_block parser
-  | Token.Lam -> parse_lambda parser
+  | Token.Lt -> parse_lambda parser
   | Token.If -> parse_if parser
   | Token.Name -> parse_var parser
   | Token.Number -> parse_number parser
@@ -193,10 +193,9 @@ and parse_block parser =
 
 and parse_lambda parser =
   let start = (advance parser).span in
-  ignore (consume parser Token.LParen "expect a '('");
-  let params = parse_list parser parse_param Token.Comma [Token.RParen] in
-  synchronize parser [Token.RParen; Token.LBrace];
-  ignore (consume parser Token.RParen "expect a ')'");
+  let params = parse_list parser parse_param Token.Comma [Token.Gt] in
+  synchronize parser [Token.Gt; Token.LBrace];
+  ignore (consume parser Token.Gt "expect a '>'");
   let body = parse_block parser in
   Parsetree.{kind = Lambda (params, body); span = Source.merge start body.span}
 

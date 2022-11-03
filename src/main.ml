@@ -1,7 +1,7 @@
 open Nox
 
 let () =
-  let source = Source.make "let x = lam(a, b) {a + b}" in
+  let source = Source.make "10 < <x> {x} (100)" in
   try
     let stmts = Parser.parse source in
     print_endline (Printer.string_of_stmts stmts)
