@@ -1,9 +1,9 @@
-(** Parse tree definition module. *)
+(** Abstract syntax tree (AST) definition module. *)
 
-(** A name in the parse tree. *)
+(** A name in the AST. *)
 type name = string
 
-(** A parse tree node. *)
+(** An AST node. *)
 type 'a node = {kind : 'a; span : Source.span}
 
 (** A binary operator. *)

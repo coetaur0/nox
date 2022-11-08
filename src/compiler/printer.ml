@@ -22,10 +22,10 @@ let string_of_diagnostic diagnostic =
   let open Diagnostic in
   string_of_span diagnostic.span ^ ": " ^ diagnostic.message ^ "."
 
-(* ----- Parse tree representation functions ---------------------------------------------------- *)
+(* ----- AST representation functions ----------------------------------------------------------- *)
 
 let string_of_binop op =
-  let open Parsetree in
+  let open Ast in
   match op with
   | Or -> "||"
   | And -> "&&"
@@ -41,7 +41,7 @@ let string_of_binop op =
   | Div -> "/"
 
 let string_of_unop op =
-  let open Parsetree in
+  let open Ast in
   match op with
   | Not -> "!"
   | Neg -> "-"
@@ -50,20 +50,20 @@ let rec string_of_stmts stmts =
   string_of_list stmts string_of_stmt ";"
 
 and string_of_stmt stmt =
-  let open Parsetree in
+  let open Ast in
   match stmt with
   | Decl decl -> string_of_decl decl
   | Expr expr -> string_of_expr expr
 
 and string_of_decl decl =
-  let open Parsetree in
+  let open Ast in
   match decl.kind with
   | Fn (name, params, body) ->
     "fn " ^ name ^ "(" ^ string_of_list params (fun x -> x) "," ^ ") " ^ string_of_expr body
   | Let (name, value) -> "let " ^ name ^ " = " ^ string_of_expr value
 
 and string_of_expr expr =
-  let open Parsetree in
+  let open Ast in
   match expr.kind with
   | Binary (op, lhs, rhs) ->
     "(" ^ string_of_expr lhs ^ " " ^ string_of_binop op ^ " " ^ string_of_expr rhs ^ ")"
@@ -84,3 +84,17 @@ and string_of_expr expr =
   | Boolean bool -> string_of_bool bool
   | Unit -> "()"
   | Invalid -> "<invalid expression>"
+
+(* ----- Types representation functions --------------------------------------------------------- *)
+
+let rec string_of_type ty =
+  let open Types in
+  match ty with
+  | Fn (params, return) ->
+    "(" ^ string_of_list params string_of_type "," ^ ") -> " ^ string_of_type return
+  | Generic x -> x
+  | Var {contents = Bound ty'} -> string_of_type ty'
+  | Var {contents = Free x} -> x
+  | Number -> "number"
+  | Boolean -> "boolean"
+  | Unit -> "unit"
