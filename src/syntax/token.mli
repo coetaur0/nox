@@ -1,4 +1,4 @@
-(** Token definition module. *)
+(** Lexical tokens. *)
 
 (** A lexeme is a unit of syntax in a source. *)
 type lexeme =

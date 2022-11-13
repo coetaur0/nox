@@ -94,7 +94,7 @@ let rec string_of_type ty =
     "(" ^ string_of_list params string_of_type "," ^ ") -> " ^ string_of_type return
   | Generic x -> x
   | Var {contents = Bound ty'} -> string_of_type ty'
-  | Var {contents = Free x} -> x
+  | Var {contents = Free (x, _)} -> x
   | Number -> "number"
   | Boolean -> "boolean"
   | Unit -> "unit"

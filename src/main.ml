@@ -1,12 +1,15 @@
 open Nox
 
 let () =
-  let source = Source.make "10 < <x> {x} (100)" in
+  let source = Source.make "<x> {let y = <z> {x(z)}}" in
   try
     let stmts = Parser.parse source in
-    print_endline (Printer.string_of_stmts stmts)
+    let ty = Typechecker.infer stmts in
+    print_endline (Printer.string_of_type ty)
   with
-    Parser.SyntaxError diagnostics ->
+    | Parser.SyntaxError diagnostics ->
       List.iter 
         (fun diagnostic -> print_endline (Printer.string_of_diagnostic diagnostic)) 
         diagnostics
+    | Typechecker.TypeError diagnostic ->
+      print_endline (Printer.string_of_diagnostic diagnostic)

@@ -19,7 +19,7 @@ let rec advance lexer n =
     ()
   else
     let offset = lexer.current.offset + 1 in
-    let line, column =
+    let (line, column) =
       if peek lexer 0 = Some '\n' then
         (lexer.current.line + 1, 1)
       else

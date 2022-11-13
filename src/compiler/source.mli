@@ -1,4 +1,4 @@
-(** Source manipulation module. *)
+(** Sources, positions and spans. *)
 
 (** A source of code. *)
 type t = {path : string option; content : string}

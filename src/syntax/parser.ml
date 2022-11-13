@@ -145,7 +145,7 @@ and parse_unary parser =
   match unop with
   | Some op ->
     let start = (advance parser).span in
-    let operand = parse_expr parser in
+    let operand = parse_unary parser in
     Ast.{kind = Unary (op, operand); span = Source.merge start operand.span}
   | None ->
     parse_app parser

@@ -1,4 +1,4 @@
-(** Abstract syntax tree (AST) definition module. *)
+(** Abstract syntax tree (AST). *)
 
 (** A name in the AST. *)
 type name = string

@@ -1,4 +1,4 @@
-(** Type definition module. *)
+(** Data types. *)
 
 (** A type variable name. *)
 type name = string
@@ -15,4 +15,4 @@ type t =
 (** A type variable. *)
 and var =
   | Bound of t
-  | Free of name
+  | Free of name * int
