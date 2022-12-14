@@ -33,12 +33,13 @@ let check_keywords _ =
 
 let check_names _ =
   check
-    "id x1 _a snake_case camelCase _"
+    "id x1 _a snake_case camelCase PascalCase _"
     [(Token.Name, "id");
      (Token.Name, "x1");
      (Token.Name, "_a");
      (Token.Name, "snake_case");
      (Token.Name, "camelCase");
+     (Token.Name, "PascalCase");
      (Token.Name, "_");
      (Token.Eof, "")]
 

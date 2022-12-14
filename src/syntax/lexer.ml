@@ -44,18 +44,10 @@ let consume lexer predicate =
 let make_token lexer kind =
   Token.{kind; span = Source.{left = lexer.start; right = lexer.current}}
 
-let is_lower =
+let is_alpha =
   function
-  | 'a' .. 'z' | '_' -> true
+  | 'a' .. 'z' | 'A' .. 'Z' | '_' -> true
   | _ -> false
-  
-let is_upper =
-  function
-  | 'A' .. 'Z' -> true
-  | _ -> false
-
-let is_alpha c =
-  is_lower c || is_upper c
 
 let is_digit =
   function
@@ -135,7 +127,7 @@ let rec next lexer =
       next lexer)
     else 
       lex_symbol lexer
-  | Some c when is_lower c -> lex_identifier lexer
+  | Some c when is_alpha c -> lex_identifier lexer
   | Some c when is_digit c -> lex_number lexer
   | Some _ -> lex_symbol lexer
   | None -> make_token lexer Token.Eof

@@ -1,7 +1,7 @@
 open Nox
 
 let () =
-  let source = Source.make "<x> {let y = <z> {x(z)}}" in
+  let source = Source.make "<x> {let y = <z> {x(z)}; y}" in
   try
     let stmts = Parser.parse source in
     let ty = Typechecker.infer stmts in
