@@ -145,8 +145,8 @@ and infer_stmt env =
   | Ast.Decl decl -> infer_decl env decl
   | Ast.Expr expr -> (infer_expr env expr, env)
 
-and infer_decl env decl =
-  match Ast.(decl.kind) with
+and infer_decl env node =
+  match Ast.(node.kind) with
   | Ast.Fn (name, params, body) -> infer_fn env name params body
   | Ast.Let (name, value) -> infer_let env name value
 
