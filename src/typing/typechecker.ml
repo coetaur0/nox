@@ -113,15 +113,14 @@ let rec unify span lhs rhs =
 
 let rec collect_fn_types env =
   function
-  | Ast.Decl decl :: rest ->
+  | stmt :: rest ->
     let env' = collect_fn_types env rest in
-   (match Ast.(decl.kind) with
+   (match Ast.(stmt.value) with
     | Ast.Fn (name, params, _) ->
       let param_types = List.map (fun _ -> new_var !current_level) params in
       let ty = Types.Fn (param_types, new_var !current_level) in
-      Env.add name ty env'
+      Env.add name.value ty env'
     | _ -> env')
-  | _ :: rest -> collect_fn_types env rest
   | [] -> env
 
 let rec infer_stmts env stmts =
@@ -140,44 +139,40 @@ let rec infer_stmts env stmts =
   in
   infer_stmts' env' stmts
 
-and infer_stmt env =
-  function
-  | Ast.Decl decl -> infer_decl env decl
-  | Ast.Expr expr -> (infer_expr env expr, env)
-
-and infer_decl env node =
-  match Ast.(node.kind) with
+and infer_stmt env stmt =
+  match Ast.(stmt.value) with
   | Ast.Fn (name, params, body) -> infer_fn env name params body
   | Ast.Let (name, value) -> infer_let env name value
+  | Ast.Expr expr -> (infer_expr env Ast.{value = expr; span = stmt.span}, env)
 
 and infer_fn env name params body =
   enter_level ();
   let ty =
-    match Env.find name env with
+    match Env.find name.value env with
     | Types.Fn (param_types, _) ->
       let env' =
         List.fold_left2
          (fun env param param_type -> Env.add param param_type env)
          env
-         params
+         (List.map (fun p -> Ast.(p.value)) params)
          param_types
       in
       let return_type = infer_expr env' body in
       Types.Fn (param_types, return_type)
-    | _ -> raise (TypeError {message = "expect a function"; span = body.span})
+    | _ -> raise (TypeError {message = "expect a function"; span = name.span})
   in
   exit_level ();
   let ty' = generalise ty in
-  (Types.Unit, Env.add name ty' env)
+  (Types.Unit, Env.add name.value ty' env)
 
 and infer_let env name value =
   enter_level ();
   let ty = infer_expr env value in
   exit_level ();
-  (Types.Unit, Env.add name (generalise ty) env)
+  (Types.Unit, Env.add name.value (generalise ty) env)
 
 and infer_expr env node =
-  match Ast.(node.kind) with
+  match Ast.(node.value) with
   | Ast.Binary (op, lhs, rhs) -> infer_binary env op lhs rhs
   | Ast.Unary (op, operand) -> infer_unary env op operand
   | Ast.Block stmts -> infer_stmts env stmts
@@ -192,7 +187,8 @@ and infer_expr env node =
   | Ast.Number _ -> Types.Number
   | Ast.Boolean _ -> Types.Boolean
   | Ast.Unit -> Types.Unit
-  | Ast.Invalid -> raise (TypeError {message = "cannot type an invalid expression"; span = node.span})
+  | Ast.Invalid ->
+    raise (TypeError {message = "cannot type an invalid expression"; span = node.span})
 
 and infer_binary env op lhs rhs =
   let lhs_type = infer_expr env lhs in
@@ -270,7 +266,7 @@ and infer_lambda env params body =
     List.fold_left2
      (fun env param param_type -> Env.add param param_type env)
       env
-      params
+      (List.map (fun p -> Ast.(p.value)) params)
       param_types
   in
   let return_type = infer_expr env' body in

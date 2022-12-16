@@ -5,4 +5,4 @@ exception TypeError of Diagnostic.t
 
 (** [infer stmts] is the type inferred by the type checker for a sequence of statements.
     This function raises a [TypeError] exception when it encounters a type error. *)
-val infer : Ast.stmt list -> Types.t
+val infer : Ast.stmt Ast.node list -> Types.t

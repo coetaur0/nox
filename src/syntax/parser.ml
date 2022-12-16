@@ -64,47 +64,41 @@ let parse_list parser parse_func separator delimiters =
   in
   parse_list' []
 
-let parse_param parser =
-  match consume parser Token.Name "expect a parameter name" with
-  | Some token ->
-    Source.read parser.source token.span
-  | None ->
-    ""
+let parse_name message parser =
+  match consume parser Token.Name message with
+  | Some token -> Ast.{value = Source.read parser.source token.span; span = token.span}
+  | None -> Ast.{value = ""; span = parser.token.span}
 
 let rec parse_stmts parser =
   parse_list parser parse_stmt Token.Semicolon [Token.Eof]
 
 and parse_stmt parser =
   match parser.token.kind with
-  | Token.Fn -> Ast.Decl (parse_fn parser)
-  | Token.Let -> Ast.Decl (parse_let parser)
-  | _ -> Ast.Expr (parse_expr parser)
+  | Token.Fn -> parse_fn parser
+  | Token.Let -> parse_let parser
+  | _ ->
+    let node = parse_expr parser in
+    Ast.{value = Expr node.value; span = node.span}
 
 and parse_fn parser =
   let start = (advance parser).span in
-  let name =
-    match consume parser Token.Name "expect a function name" with
-    | Some token -> Source.read parser.source token.span
-    | None -> ""
-  in
+  let name = parse_name "expect a function name" parser in
   ignore (consume parser Token.LParen "expect a '('");
-  let params = parse_list parser parse_param Token.Comma [Token.RParen] in
+  let params =
+    parse_list parser (parse_name "expect a parameter name") Token.Comma [Token.RParen]
+  in
   synchronize parser [Token.RParen; Token.LBrace];
   ignore (consume parser Token.RParen "expect a ')'");
   synchronize parser [Token.LBrace];
   let body = parse_block parser in
-  Ast.{kind = Fn (name, params, body); span = Source.merge start body.span}
+  Ast.{value = Fn (name, params, body); span = Source.merge start body.span}
 
 and parse_let parser =
   let start = (advance parser).span in
-  let name =
-    match consume parser Token.Name "expect a variable name" with
-    | Some token -> Source.read parser.source token.span
-    | None -> ""
-  in
+  let name = parse_name "expect a variable name" parser in
   ignore (consume parser Token.Assign "expect a '='");
   let body = parse_expr parser in
-  Ast.{kind = Let (name, body); span = Source.merge start body.span}
+  Ast.{value = Let (name, body); span = Source.merge start body.span}
 
 and parse_expr parser =
   parse_binary parser 0 (parse_unary parser)
@@ -130,7 +124,7 @@ and parse_binary parser precedence lhs =
   if precedence < next_precedence then
    (ignore (advance parser);
     let rhs = parse_binary parser next_precedence (parse_unary parser) in
-    let expr = Ast.{kind = Binary (op, lhs, rhs); span = Source.merge lhs.span rhs.span} in
+    let expr = Ast.{value = Binary (op, lhs, rhs); span = Source.merge lhs.span rhs.span} in
     parse_binary parser precedence expr)
   else
     lhs
@@ -146,7 +140,7 @@ and parse_unary parser =
   | Some op ->
     let start = (advance parser).span in
     let operand = parse_unary parser in
-    Ast.{kind = Unary (op, operand); span = Source.merge start operand.span}
+    Ast.{value = Unary (op, operand); span = Source.merge start operand.span}
   | None ->
     parse_app parser
 
@@ -160,7 +154,7 @@ and parse_app parser =
         | Some token -> token.span
         | None -> Ast.(callee.span)
       in
-      parse_args Ast.{kind = App (callee, args); span = Source.merge callee.span span_end})
+      parse_args Ast.{value = App (callee, args); span = Source.merge callee.span span_end})
     else
       callee
   in
@@ -178,7 +172,7 @@ and parse_primary parser =
   | Token.LParen -> parse_paren parser
   | _ ->
     emit_diagnostic parser "expect an expression" parser.token.span;
-    Ast.{kind = Invalid; span = parser.token.span}
+    Ast.{value = Invalid; span = parser.token.span}
 
 and parse_block parser =
   let left = parser.token.span.left in
@@ -189,15 +183,15 @@ and parse_block parser =
     | Some token -> token.span.right
     | None -> parser.token.span.left
   in
-  Ast.{kind = Block stmts; span = Source.{left; right}}
+  Ast.{value = Block stmts; span = Source.{left; right}}
 
 and parse_lambda parser =
   let start = (advance parser).span in
-  let params = parse_list parser parse_param Token.Comma [Token.Gt] in
+  let params = parse_list parser (parse_name "expect a parameter name") Token.Comma [Token.Gt] in
   synchronize parser [Token.Gt; Token.LBrace];
   ignore (consume parser Token.Gt "expect a '>'");
   let body = parse_block parser in
-  Ast.{kind = Lambda (params, body); span = Source.merge start body.span}
+  Ast.{value = Lambda (params, body); span = Source.merge start body.span}
 
 and parse_if parser =
   let start = (advance parser).span in
@@ -219,27 +213,27 @@ and parse_if parser =
     | Some expr -> expr.span
     | None -> thn.span
   in
-  Ast.{kind = If (cond, thn, els); span = Source.merge start span_end}
+  Ast.{value = If (cond, thn, els); span = Source.merge start span_end}
 
 and parse_var parser =
   let span = (advance parser).span in
   let x = Source.read parser.source span in
-  Ast.{kind = Var x; span}
+  Ast.{value = Var x; span}
 
 and parse_number parser =
   let span = (advance parser).span in
   let num = float_of_string (Source.read parser.source span) in
-  Ast.{kind= Number num; span}
+  Ast.{value= Number num; span}
 
 and parse_boolean parser =
   let span = (advance parser).span in
   let bool = bool_of_string (Source.read parser.source span) in
-  Ast.{kind = Boolean bool; span}
+  Ast.{value = Boolean bool; span}
 
 and parse_paren parser =
   let start = (advance parser).span in
   if parser.token.kind = Token.RParen then
-    Ast.{kind = Unit; span = Source.merge start (advance parser).span}
+    Ast.{value = Unit; span = Source.merge start (advance parser).span}
   else
     let expr = parse_expr parser in
     synchronize parser [Token.RParen];
