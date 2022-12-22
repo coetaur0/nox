@@ -1,9 +1,9 @@
 (* ----- Lexer ---------------------------------------------------------------------------------- *)
 
 type t =
- {source : Source.t;
-  mutable start : Source.position;
-  mutable current : Source.position}
+  { source : Source.t;
+    mutable start : Source.position;
+    mutable current : Source.position }
 
 let make source =
   let start = Source.{line = 1; column = 1; offset = 0} in
@@ -11,13 +11,12 @@ let make source =
 
 (* ----- Utility functions ---------------------------------------------------------------------- *)
 
-let peek lexer offset =
-  Source.at lexer.source (lexer.current.offset + offset)
+let peek lexer offset = Source.at lexer.source (lexer.current.offset + offset)
 
 let rec advance lexer n =
   if n <= 0 || lexer.current.offset >= Source.length lexer.source then
     ()
-  else
+  else (
     let offset = lexer.current.offset + 1 in
     let (line, column) =
       if peek lexer 0 = Some '\n' then
@@ -27,6 +26,7 @@ let rec advance lexer n =
     in
     lexer.current <- Source.{line; column; offset};
     advance lexer (n - 1)
+  )
 
 let consume lexer predicate =
   let rec consume' _ =
@@ -34,31 +34,25 @@ let consume lexer predicate =
     | Some c when predicate c ->
       advance lexer 1;
       consume' ()
-    | _ ->
-      ()
+    | _ -> ()
   in
   let left = lexer.current in
   consume' ();
   Source.read lexer.source Source.{left; right = lexer.current}
 
-let make_token lexer kind =
-  Token.{kind; span = Source.{left = lexer.start; right = lexer.current}}
+let make_token lexer kind = Token.{kind; span = Source.{left = lexer.start; right = lexer.current}}
 
-let is_alpha =
-  function
+let is_alpha = function
   | 'a' .. 'z' | 'A' .. 'Z' | '_' -> true
   | _ -> false
 
-let is_digit =
-  function
+let is_digit = function
   | '0' .. '9' -> true
   | _ -> false
 
-let is_alnum c =
-  is_alpha c || is_digit c
+let is_alnum c = is_alpha c || is_digit c
 
-let is_whitespace =
-  function
+let is_whitespace = function
   | ' ' | '\t' | '\r' | '\n' -> true
   | _ -> false
 
@@ -84,9 +78,10 @@ let lex_identifier lexer =
 
 let lex_number lexer =
   ignore (consume lexer is_digit);
-  if peek lexer 0 = Some '.' then 
-   (advance lexer 1;
-    ignore (consume lexer is_digit));
+  if peek lexer 0 = Some '.' then (
+    advance lexer 1;
+    ignore (consume lexer is_digit)
+  );
   make_token lexer Token.Number
 
 let lex_symbol lexer =
@@ -122,10 +117,10 @@ let rec next lexer =
   lexer.start <- lexer.current;
   match peek lexer 0 with
   | Some '/' ->
-    if peek lexer 1 = Some '/' then 
-     (skip_comment lexer;
-      next lexer)
-    else 
+    if peek lexer 1 = Some '/' then (
+      skip_comment lexer;
+      next lexer
+    ) else
       lex_symbol lexer
   | Some c when is_alpha c -> lex_identifier lexer
   | Some c when is_digit c -> lex_number lexer

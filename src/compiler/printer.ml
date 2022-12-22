@@ -41,14 +41,14 @@ let string_of_unop op =
   | Ast.Not -> "!"
   | Ast.Neg -> "-"
 
-let rec string_of_stmts stmts =
-  string_of_list stmts string_of_stmt "; "
+let rec string_of_stmts stmts = string_of_list stmts string_of_stmt "; "
 
 and string_of_stmt stmt =
   match Ast.(stmt.value) with
   | Ast.Fn (name, params, body) ->
-    "fn " ^ name.value ^ "(" ^ string_of_list params (fun p -> p.value) ", " ^ ") " ^
-    string_of_expr body
+    "fn " ^ name.value ^ "("
+    ^ string_of_list params (fun p -> p.value) ", "
+    ^ ") " ^ string_of_expr body
   | Ast.Let (name, value) -> "let " ^ name.value ^ " = " ^ string_of_expr value
   | Ast.Expr expr -> string_of_expr {value = expr; span = stmt.span}
 

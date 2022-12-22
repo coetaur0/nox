@@ -4,12 +4,12 @@ exception SyntaxError of Diagnostic.t list
 
 (* ----- Parser --------------------------------------------------------------------------------- *)
 
-type t = 
- {source : Source.t;
-  lexer : Lexer.t;
-  mutable token : Token.t;
-  mutable diagnostics : Diagnostic.t list;
-  mutable panic : bool}
+type t =
+  { source : Source.t;
+    lexer : Lexer.t;
+    mutable token : Token.t;
+    mutable diagnostics : Diagnostic.t list;
+    mutable panic : bool }
 
 (* ----- Utility functions ---------------------------------------------------------------------- *)
 
@@ -21,30 +21,29 @@ let advance parser =
 let emit_diagnostic parser message span =
   if parser.panic then
     ()
-  else
-   (parser.panic <- true;
-    parser.diagnostics <- Diagnostic.{message; span} :: parser.diagnostics)
+  else (
+    parser.panic <- true;
+    parser.diagnostics <- Diagnostic.{message; span} :: parser.diagnostics
+  )
 
 let consume parser lexeme message =
   if parser.token.kind = lexeme then
     Some (advance parser)
-  else
-   (emit_diagnostic parser message parser.token.span;
-    None)
+  else (
+    emit_diagnostic parser message parser.token.span;
+    None
+  )
 
 let synchronize parser lexemes =
   let rec synchronize' () =
     match parser.token.kind with
-    | l when List.exists (fun lexeme -> l = lexeme) lexemes ->
-      parser.panic <- false
-    | Token.Eof ->
-      parser.panic <- false
+    | l when List.exists (fun lexeme -> l = lexeme) lexemes -> parser.panic <- false
+    | Token.Eof -> parser.panic <- false
     | _ ->
       ignore (advance parser);
       synchronize' ()
   in
-  if parser.panic then
-    synchronize' ()
+  if parser.panic then synchronize' ()
 
 (* ----- Parsing functions ---------------------------------------------------------------------- *)
 
@@ -53,14 +52,15 @@ let parse_list parser parse_func separator delimiters =
   let rec parse_list' result =
     if List.exists (fun elt -> elt = parser.token.kind) delimiters then
       result
-    else
+    else (
       let result' = result @ [parse_func parser] in
       synchronize parser sync_list;
-      if parser.token.kind = separator then
-       (ignore (advance parser);
-        parse_list' result')
-      else
+      if parser.token.kind = separator then (
+        ignore (advance parser);
+        parse_list' result'
+      ) else
         result'
+    )
   in
   parse_list' []
 
@@ -69,8 +69,7 @@ let parse_name message parser =
   | Some token -> Ast.{value = Source.read parser.source token.span; span = token.span}
   | None -> Ast.{value = ""; span = parser.token.span}
 
-let rec parse_stmts parser =
-  parse_list parser parse_stmt Token.Semicolon [Token.Eof]
+let rec parse_stmts parser = parse_list parser parse_stmt Token.Semicolon [Token.Eof]
 
 and parse_stmt parser =
   match parser.token.kind with
@@ -100,8 +99,7 @@ and parse_let parser =
   let body = parse_expr parser in
   Ast.{value = Let (name, body); span = Source.merge start body.span}
 
-and parse_expr parser =
-  parse_binary parser 0 (parse_unary parser)
+and parse_expr parser = parse_binary parser 0 (parse_unary parser)
 
 and parse_binary parser precedence lhs =
   let next_op () =
@@ -121,12 +119,12 @@ and parse_binary parser precedence lhs =
     | _ -> (Ast.Or, 0)
   in
   let (op, next_precedence) = next_op () in
-  if precedence < next_precedence then
-   (ignore (advance parser);
+  if precedence < next_precedence then (
+    ignore (advance parser);
     let rhs = parse_binary parser next_precedence (parse_unary parser) in
     let expr = Ast.{value = Binary (op, lhs, rhs); span = Source.merge lhs.span rhs.span} in
-    parse_binary parser precedence expr)
-  else
+    parse_binary parser precedence expr
+  ) else
     lhs
 
 and parse_unary parser =
@@ -141,21 +139,20 @@ and parse_unary parser =
     let start = (advance parser).span in
     let operand = parse_unary parser in
     Ast.{value = Unary (op, operand); span = Source.merge start operand.span}
-  | None ->
-    parse_app parser
+  | None -> parse_app parser
 
 and parse_app parser =
   let rec parse_args callee =
-    if parser.token.kind = Token.LParen then
-     (ignore (advance parser);
+    if parser.token.kind = Token.LParen then (
+      ignore (advance parser);
       let args = parse_list parser parse_expr Token.Comma [Token.RParen] in
       let span_end =
         match consume parser Token.RParen "expect a ')'" with
         | Some token -> token.span
         | None -> Ast.(callee.span)
       in
-      parse_args Ast.{value = App (callee, args); span = Source.merge callee.span span_end})
-    else
+      parse_args Ast.{value = App (callee, args); span = Source.merge callee.span span_end}
+    ) else
       callee
   in
   let callee = parse_primary parser in
@@ -199,13 +196,13 @@ and parse_if parser =
   synchronize parser [Token.LBrace];
   let thn = parse_block parser in
   let els =
-    if parser.token.kind = Token.Else then
-     (ignore (advance parser);
-      if parser.token.kind = Token.If then 
+    if parser.token.kind = Token.Else then (
+      ignore (advance parser);
+      if parser.token.kind = Token.If then
         Some (parse_if parser)
       else
-        Some (parse_block parser))
-    else
+        Some (parse_block parser)
+    ) else
       None
   in
   let span_end =
@@ -223,7 +220,7 @@ and parse_var parser =
 and parse_number parser =
   let span = (advance parser).span in
   let num = float_of_string (Source.read parser.source span) in
-  Ast.{value= Number num; span}
+  Ast.{value = Number num; span}
 
 and parse_boolean parser =
   let span = (advance parser).span in
@@ -234,11 +231,12 @@ and parse_paren parser =
   let start = (advance parser).span in
   if parser.token.kind = Token.RParen then
     Ast.{value = Unit; span = Source.merge start (advance parser).span}
-  else
+  else (
     let expr = parse_expr parser in
     synchronize parser [Token.RParen];
     ignore (consume parser Token.RParen "expect a ')'");
     expr
+  )
 
 let parse source =
   let lexer = Lexer.make source in

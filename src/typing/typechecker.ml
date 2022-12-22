@@ -30,33 +30,34 @@ let exit_level () =
 let gensym () =
   let i = !current_id in
   incr current_id;
-  "'" ^ String.make 1 (Char.chr (97 + (i mod 26))) ^ if i >= 26 then string_of_int (i / 26) else ""
+  "'"
+  ^ String.make 1 (Char.chr (97 + (i mod 26)))
+  ^
+  if i >= 26 then
+    string_of_int (i / 26)
+  else
+    ""
 
-let new_var level =
-  Types.Var (ref (Types.Free (gensym (), level)))
+let new_var level = Types.Var (ref (Types.Free (gensym (), level)))
 
 (* ----- Generalisation and instantiation functions --------------------------------------------- *)
 
-let rec generalise =
-  function
-  | Types.Fn (params, return) ->
-    Types.Fn (List.map generalise params, generalise return)
+let rec generalise = function
+  | Types.Fn (params, return) -> Types.Fn (List.map generalise params, generalise return)
   | Types.Var {contents = Bound ty} -> generalise ty
   | Types.Var {contents = Free (x, level)} when level > !current_level -> Types.Generic x
   | _ as ty -> ty
 
 let instantiate ty =
   let generics = Hashtbl.create 10 in
-  let rec instantiate' =
-    function
+  let rec instantiate' = function
     | Types.Fn (params, return) -> Types.Fn (List.map instantiate' params, instantiate' return)
-    | Types.Generic x ->
-     (try
-        Hashtbl.find generics x
+    | Types.Generic x -> (
+      try Hashtbl.find generics x
       with Not_found ->
         let var = new_var !current_level in
         Hashtbl.add generics x var;
-        var)
+        var )
     | Types.Var {contents = Bound ty} -> instantiate' ty
     | _ as ty -> ty
   in
@@ -64,8 +65,7 @@ let instantiate ty =
 
 (* ----- Unification function ------------------------------------------------------------------- *)
 
-let rec occurs typevar =
-  function
+let rec occurs typevar = function
   | Types.Fn (params, return) -> List.exists (occurs typevar) params || occurs typevar return
   | Types.Var {contents = Bound ty} -> occurs typevar ty
   | Types.Var typevar' when typevar == typevar' -> true
@@ -82,53 +82,47 @@ let rec occurs typevar =
 let rec unify span lhs rhs =
   if lhs == rhs then
     ()
-  else
+  else (
     match (lhs, rhs) with
     | (Types.Fn (lhs_params, lhs_return), Types.Fn (rhs_params, rhs_return)) ->
       List.iter2 (unify span) lhs_params rhs_params;
       unify span lhs_return rhs_return
-    | (Types.Var {contents = Bound lhs'}, rhs')
-    | (lhs', Types.Var {contents = Bound rhs'}) -> unify span lhs' rhs'
-    | (Types.Var ({contents = Free _ } as typevar), ty)
-    | (ty, Types.Var ({contents = Free _} as typevar)) ->
+    | (Types.Var {contents = Bound lhs'}, rhs') | (lhs', Types.Var {contents = Bound rhs'}) ->
+      unify span lhs' rhs'
+    | (Types.Var ({contents = Free _} as typevar), ty)
+     |(ty, Types.Var ({contents = Free _} as typevar)) ->
       if occurs typevar ty then
         raise (TypeError {message = "found recursive types"; span})
       else
         typevar := Bound ty
-    | (Types.Number, Types.Number)
-    | (Types.Boolean, Types.Boolean)
-    | (Types.Unit, Types.Unit) -> ()
+    | (Types.Number, Types.Number) | (Types.Boolean, Types.Boolean) | (Types.Unit, Types.Unit) -> ()
     | _ ->
       raise
-       (TypeError
-          {message =
-             "expect a value of type " ^
-             Printer.string_of_type lhs ^
-             ", but found a " ^
-             Printer.string_of_type rhs ^
-             " value";
-           span})
+        (TypeError
+           { message =
+               "expect a value of type " ^ Printer.string_of_type lhs ^ ", but found a "
+               ^ Printer.string_of_type rhs ^ " value";
+             span } )
+  )
 
 (* ----- Type inference functions --------------------------------------------------------------- *)
 
-let rec collect_fn_types env =
-  function
-  | stmt :: rest ->
+let rec collect_fn_types env = function
+  | stmt :: rest -> (
     let env' = collect_fn_types env rest in
-   (match Ast.(stmt.value) with
+    match Ast.(stmt.value) with
     | Ast.Fn (name, params, _) ->
       let param_types = List.map (fun _ -> new_var !current_level) params in
       let ty = Types.Fn (param_types, new_var !current_level) in
       Env.add name.value ty env'
-    | _ -> env')
+    | _ -> env' )
   | [] -> env
 
 let rec infer_stmts env stmts =
   enter_level ();
   let env' = collect_fn_types env stmts in
   exit_level ();
-  let rec infer_stmts' env =
-    function
+  let rec infer_stmts' env = function
     | [stmt] ->
       let (ty, _) = infer_stmt env stmt in
       ty
@@ -152,10 +146,10 @@ and infer_fn env name params body =
     | Types.Fn (param_types, _) ->
       let env' =
         List.fold_left2
-         (fun env param param_type -> Env.add param param_type env)
-         env
-         (List.map (fun p -> Ast.(p.value)) params)
-         param_types
+          (fun env param param_type -> Env.add param param_type env)
+          env
+          (List.map (fun p -> Ast.(p.value)) params)
+          param_types
       in
       let return_type = infer_expr env' body in
       Types.Fn (param_types, return_type)
@@ -179,11 +173,10 @@ and infer_expr env node =
   | Ast.If (cond, thn, els) -> infer_if env cond thn els
   | Ast.App (callee, args) -> infer_app env callee args
   | Ast.Lambda (params, body) -> infer_lambda env params body
-  | Ast.Var x ->
-   (try
-      instantiate (Env.find x env)
+  | Ast.Var x -> (
+    try instantiate (Env.find x env)
     with Not_found ->
-      raise (TypeError {message = "unknown variable '" ^ x ^ "'"; span = node.span}))
+      raise (TypeError {message = "unknown variable '" ^ x ^ "'"; span = node.span}) )
   | Ast.Number _ -> Types.Number
   | Ast.Boolean _ -> Types.Boolean
   | Ast.Unit -> Types.Unit
@@ -229,20 +222,16 @@ and infer_if env cond thn els =
 and infer_app env callee args =
   let callee_type = infer_expr env callee in
   let n_args = List.length args in
-  let rec match_args =
-    function
+  let rec match_args = function
     | Types.Fn (params, return) ->
       let n_params = List.length params in
       if n_args <> n_params then
         raise
-         (TypeError
-          {message =
-             "expect " ^
-             string_of_int n_params ^
-             " arguments, but " ^
-             string_of_int n_args ^
-             " were found";
-           span = Ast.(callee.span)})
+          (TypeError
+             { message =
+                 "expect " ^ string_of_int n_params ^ " arguments, but " ^ string_of_int n_args
+                 ^ " were found";
+               span = Ast.(callee.span) } )
       else
         (params, return)
     | Types.Var {contents = Bound ty} -> match_args ty
@@ -255,16 +244,15 @@ and infer_app env callee args =
   in
   let (param_types, return_type) = match_args callee_type in
   List.iter2
-   (fun param_type arg -> unify Ast.(arg.span) param_type (infer_expr env arg))
-    param_types
-    args;
+    (fun param_type arg -> unify Ast.(arg.span) param_type (infer_expr env arg))
+    param_types args;
   return_type
 
 and infer_lambda env params body =
   let param_types = List.map (fun _ -> new_var !current_level) params in
   let env' =
     List.fold_left2
-     (fun env param param_type -> Env.add param param_type env)
+      (fun env param param_type -> Env.add param param_type env)
       env
       (List.map (fun p -> Ast.(p.value)) params)
       param_types

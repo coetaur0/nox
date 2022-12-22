@@ -37,19 +37,17 @@ let check_recursive_fn _ =
 let check_mutually_recursive_fn _ =
   check "fn f(x) {x}; fn g(x) {f(true)}; fn h(x) {f(1)}; g" "('a) -> boolean";
   check
-    "fn even(n) {if n == 0 {true} else {odd(n - 1)}}; fn odd(n) {if n == 0 {false} else {even(n - 1)}}; even"
+    "fn even(n) {if n == 0 {true} else {odd(n - 1)}}; fn odd(n) {if n == 0 {false} else {even(n - \
+     1)}}; even"
     "(number) -> boolean"
 
-let check_empty_fn _ =
-  check "fn f() {}; f" "() -> unit"
+let check_empty_fn _ = check "fn f() {}; f" "() -> unit"
 
 let check_invalid_fn _ =
-  check_error
-    "fn wrong(b) {if b {b + 1} else {b - 1}}; wrong"
+  check_error "fn wrong(b) {if b {b + 1} else {b - 1}}; wrong"
     "1:17..1:18: expect a value of type boolean, but found a number value."
 
-let check_generic_var _ =
-  check "let id = <x> {x}; id(()); id(1); id(true)" "boolean"
+let check_generic_var _ = check "let id = <x> {x}; id(()); id(1); id(true)" "boolean"
 
 let check_var _ =
   check "let x = 10; x" "number";
@@ -79,17 +77,14 @@ let check_if_expr _ =
   check "if true {}" "unit"
 
 let check_invalid_if_expr _ =
-  check_error
-    "if 10 {-1} else {1}"
+  check_error "if 10 {-1} else {1}"
     "1:4..1:6: expect a value of type boolean, but found a number value.";
   check_error "if true {5}" "1:9..1:12: expect a value of type unit, but found a number value."
 
-let check_application_expr _ =
-  check "fn f(x, y) {x + y}; f(1, 2)" "number"
+let check_application_expr _ = check "fn f(x, y) {x + y}; f(1, 2)" "number"
 
 let check_invalid_application_expr _ =
-  check_error
-    "fn f(b, c) {b == c}; f(true, 1)"
+  check_error "fn f(b, c) {b == c}; f(true, 1)"
     "1:30..1:31: expect a value of type boolean, but found a number value."
 
 let check_lambda_expr _ =
@@ -104,33 +99,30 @@ let check_boolean _ =
   check "true" "boolean";
   check "false" "boolean"
 
-let check_unit _ =
-  check "()" "unit"
+let check_unit _ = check "()" "unit"
 
 (* ----- Tests ---------------------------------------------------------------------------------- *)
 
 let tests =
   "Type checker tests"
-  >:::
-  [("Polymorphic functions" >:: check_polymorphic_fn);
-   ("Recursive functions" >:: check_recursive_fn);
-   ("Mutually recursive functions" >:: check_mutually_recursive_fn);
-   ("Empty functions" >:: check_empty_fn);
-   ("Invalid functions" >:: check_invalid_fn);
-   ("Generic variables" >:: check_generic_var);
-   ("Variables" >:: check_var);
-   ("Binary expressions" >:: check_binary_expr);
-   ("Invalid binary expressions" >:: check_invalid_binary_expr);
-   ("Unary expressions" >:: check_unary_expr);
-   ("Invalid unary expressions" >:: check_invalid_unary_expr);
-   ("If expressions" >:: check_if_expr);
-   ("Invalid if expressions" >:: check_invalid_if_expr);
-   ("Application expressions" >:: check_application_expr);
-   ("Invalid application expressions" >:: check_invalid_application_expr);
-   ("Lambda expressions" >:: check_lambda_expr);
-   ("Number literals" >:: check_number);
-   ("Boolean literals" >:: check_boolean);
-   ("Unit literals" >:: check_unit)]
+  >::: [ "Polymorphic functions" >:: check_polymorphic_fn;
+         "Recursive functions" >:: check_recursive_fn;
+         "Mutually recursive functions" >:: check_mutually_recursive_fn;
+         "Empty functions" >:: check_empty_fn;
+         "Invalid functions" >:: check_invalid_fn;
+         "Generic variables" >:: check_generic_var;
+         "Variables" >:: check_var;
+         "Binary expressions" >:: check_binary_expr;
+         "Invalid binary expressions" >:: check_invalid_binary_expr;
+         "Unary expressions" >:: check_unary_expr;
+         "Invalid unary expressions" >:: check_invalid_unary_expr;
+         "If expressions" >:: check_if_expr;
+         "Invalid if expressions" >:: check_invalid_if_expr;
+         "Application expressions" >:: check_application_expr;
+         "Invalid application expressions" >:: check_invalid_application_expr;
+         "Lambda expressions" >:: check_lambda_expr;
+         "Number literals" >:: check_number;
+         "Boolean literals" >:: check_boolean;
+         "Unit literals" >:: check_unit ]
 
-let () =
-  run_test_tt_main tests
+let () = run_test_tt_main tests

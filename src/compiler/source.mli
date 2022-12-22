@@ -1,13 +1,20 @@
 (** Sources, positions and spans. *)
 
 (** A source of code. *)
-type t = {path : string option; content : string}
+type t =
+  { path : string option;
+    content : string }
 
 (** A position in a source. *)
-type position = {line : int; column : int; offset : int}
+type position =
+  { line : int;
+    column : int;
+    offset : int }
 
 (** A span between two locations in a source. *)
-type span = {left : position; right : position}
+type span =
+  { left : position;
+    right : position }
 
 (** [make string] is a new source containing some [string]. *)
 val make : string -> t

@@ -7,9 +7,8 @@ let () =
     let ty = Typechecker.infer stmts in
     print_endline (Printer.string_of_type ty)
   with
-    | Parser.SyntaxError diagnostics ->
-      List.iter 
-        (fun diagnostic -> print_endline (Printer.string_of_diagnostic diagnostic)) 
-        diagnostics
-    | Typechecker.TypeError diagnostic ->
-      print_endline (Printer.string_of_diagnostic diagnostic)
+  | Parser.SyntaxError diagnostics ->
+    List.iter
+      (fun diagnostic -> print_endline (Printer.string_of_diagnostic diagnostic))
+      diagnostics
+  | Typechecker.TypeError diagnostic -> print_endline (Printer.string_of_diagnostic diagnostic)

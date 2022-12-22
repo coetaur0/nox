@@ -33,4 +33,6 @@ type lexeme =
   | Unknown
 
 (** A lexical token is represented by a lexeme and a span in a source. *)
-type t = {kind : lexeme; span : Source.span}
+type t =
+  { kind : lexeme;
+    span : Source.span }

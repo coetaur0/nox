@@ -4,7 +4,9 @@
 type name = string
 
 (** An AST node. *)
-type 'a node = {value : 'a; span : Source.span}
+type 'a node =
+  { value : 'a;
+    span : Source.span }
 
 (** A binary operator. *)
 type binop =
