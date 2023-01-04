@@ -8,7 +8,7 @@ let check string expected =
   try
     let stmts = Parser.parse source in
     let ty = Typechecker.infer stmts in
-    assert_equal expected (Printer.string_of_type ty)
+    assert_equal expected (Printer.type_repr ty)
   with
   | Parser.SyntaxError _ -> assert_failure "Expect a valid program"
   | Typechecker.TypeError _ -> assert_failure "Expect a well-typed program"
@@ -21,8 +21,7 @@ let check_error string expected =
     assert_failure "Expect an ill-typed program"
   with
   | Parser.SyntaxError _ -> assert_failure "Expect a valid program"
-  | Typechecker.TypeError diagnostic ->
-    assert_equal expected (Printer.string_of_diagnostic diagnostic)
+  | Typechecker.TypeError diagnostic -> assert_equal expected (Printer.diagnostic_repr diagnostic)
 
 (* ----- Test functions ------------------------------------------------------------------------- *)
 

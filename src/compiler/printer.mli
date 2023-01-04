@@ -1,24 +1,18 @@
 (** Pretty printing module. *)
 
-(** [string_of_list list string_fn separator] is a string representation for a list of values.
+(** [list_repr list string_fn separator] is a string representation for a list of values.
     [string_fn] is the function used to transform the values in the list into strings.
     [separator] is the string used to separate the elements of the list in the output. *)
-val string_of_list : 'a list -> ('a -> string) -> string -> string
+val list_repr : 'a list -> ('a -> string) -> string -> string
 
-(** [string_of_span span] is a string representation for a [span]. *)
-val string_of_span : Source.span -> string
+(** [span_repr span] is a string representation for a [span]. *)
+val span_repr : Source.span -> string
 
-(** [string_of_diagnostic diagnostic] is a string representation for a [diagnostic]. *)
-val string_of_diagnostic : Diagnostic.t -> string
+(** [diagnostic_repr diagnostic] is a string representation for a [diagnostic]. *)
+val diagnostic_repr : Diagnostic.t -> string
 
-(** [string_of_stmts stmts] is a string representation for a sequence of statements. *)
-val string_of_stmts : Ast.stmt Ast.node list -> string
+(** [ast_repr stmts] is a string representation for a sequence of AST statements. *)
+val ast_repr : Ast.stmt Ast.node list -> string
 
-(** [string_of_stmt stmt] is a string representation for a statement. *)
-val string_of_stmt : Ast.stmt Ast.node -> string
-
-(** [string_of_expr expr] is a string representation for an expression. *)
-val string_of_expr : Ast.expr Ast.node -> string
-
-(** [string_of_type ty] is a string representation for a type. *)
-val string_of_type : Types.t -> string
+(** [type_repr ty] is a string representation for a type. *)
+val type_repr : Types.t -> string

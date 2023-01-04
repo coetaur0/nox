@@ -28,20 +28,20 @@ type unop =
   | Not
   | Neg
 
-(** A statement. *)
+(** An AST statement. *)
 type stmt =
-  | Fn of name node * name node list * expr node
-  | Let of name node * expr node
+  | Fn of name * name list * expr node
+  | Let of name * expr node
   | Expr of expr
 
-(** An expression. *)
+(** An AST expression. *)
 and expr =
   | Binary of binop * expr node * expr node
   | Unary of unop * expr node
   | Block of stmt node list
   | If of expr node * expr node * expr node option
   | App of expr node * expr node list
-  | Lambda of name node list * expr node
+  | Lambda of name list * expr node
   | Var of name
   | Number of float
   | Boolean of bool

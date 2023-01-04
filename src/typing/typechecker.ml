@@ -63,7 +63,7 @@ let instantiate ty =
   in
   instantiate' ty
 
-(* ----- Unification function ------------------------------------------------------------------- *)
+(* ----- Unification functions ------------------------------------------------------------------ *)
 
 let rec occurs typevar = function
   | Types.Fn (params, return) -> List.exists (occurs typevar) params || occurs typevar return
@@ -100,8 +100,8 @@ let rec unify span lhs rhs =
       raise
         (TypeError
            { message =
-               "expect a value of type " ^ Printer.string_of_type lhs ^ ", but found a "
-               ^ Printer.string_of_type rhs ^ " value";
+               "expect a value of type " ^ Printer.type_repr lhs ^ ", but found a "
+               ^ Printer.type_repr rhs ^ " value";
              span } )
   )
 
@@ -114,7 +114,7 @@ let rec collect_fn_types env = function
     | Ast.Fn (name, params, _) ->
       let param_types = List.map (fun _ -> new_var !current_level) params in
       let ty = Types.Fn (param_types, new_var !current_level) in
-      Env.add name.value ty env'
+      Env.add name ty env'
     | _ -> env' )
   | [] -> env
 
@@ -142,28 +142,26 @@ and infer_stmt env stmt =
 and infer_fn env name params body =
   enter_level ();
   let ty =
-    match Env.find name.value env with
+    match Env.find name env with
     | Types.Fn (param_types, _) ->
       let env' =
         List.fold_left2
           (fun env param param_type -> Env.add param param_type env)
-          env
-          (List.map (fun p -> Ast.(p.value)) params)
-          param_types
+          env params param_types
       in
       let return_type = infer_expr env' body in
       Types.Fn (param_types, return_type)
-    | _ -> raise (TypeError {message = "expect a function"; span = name.span})
+    | _ -> raise (TypeError {message = "expect a function"; span = body.span})
   in
   exit_level ();
   let ty' = generalise ty in
-  (Types.Unit, Env.add name.value ty' env)
+  (Types.Unit, Env.add name ty' env)
 
 and infer_let env name value =
   enter_level ();
   let ty = infer_expr env value in
   exit_level ();
-  (Types.Unit, Env.add name.value (generalise ty) env)
+  (Types.Unit, Env.add name (generalise ty) env)
 
 and infer_expr env node =
   match Ast.(node.value) with
@@ -253,9 +251,7 @@ and infer_lambda env params body =
   let env' =
     List.fold_left2
       (fun env param param_type -> Env.add param param_type env)
-      env
-      (List.map (fun p -> Ast.(p.value)) params)
-      param_types
+      env params param_types
   in
   let return_type = infer_expr env' body in
   Types.Fn (param_types, return_type)

@@ -66,8 +66,8 @@ let parse_list parser parse_func separator delimiters =
 
 let parse_name message parser =
   match consume parser Token.Name message with
-  | Some token -> Ast.{value = Source.read parser.source token.span; span = token.span}
-  | None -> Ast.{value = ""; span = parser.token.span}
+  | Some token -> Source.read parser.source token.span
+  | None -> ""
 
 let rec parse_stmts parser = parse_list parser parse_stmt Token.Semicolon [Token.Eof]
 

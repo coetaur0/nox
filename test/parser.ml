@@ -7,7 +7,7 @@ let check string expected =
   let source = Source.make string in
   try
     let stmts = Parser.parse source in
-    assert_equal expected (Printer.string_of_stmts stmts)
+    assert_equal expected (Printer.ast_repr stmts)
   with Parser.SyntaxError _ -> assert_failure "Expect a valid program"
 
 let check_errors string expected =
@@ -16,9 +16,7 @@ let check_errors string expected =
     ignore (Parser.parse source);
     assert_failure "Expect an invalid program"
   with Parser.SyntaxError diagnostics ->
-    assert_equal
-      (List.equal ( = ) (List.map Printer.string_of_diagnostic diagnostics) expected)
-      true
+    assert_equal (List.equal ( = ) (List.map Printer.diagnostic_repr diagnostics) expected) true
 
 (* ----- Test functions ------------------------------------------------------------------------- *)
 
