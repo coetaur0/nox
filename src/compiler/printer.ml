@@ -82,3 +82,33 @@ let rec type_repr ty =
   | Types.Number -> "number"
   | Types.Boolean -> "boolean"
   | Types.Unit -> "unit"
+
+(* ----- IR representation functions ------------------------------------------------------------ *)
+
+let rec ir_repr stmts = list_repr stmts ir_stmt_repr "; "
+
+and ir_stmt_repr = function
+  | Ir.Fn (name, params, body) ->
+    "fn " ^ name ^ "(" ^ list_repr params (fun p -> p) ", " ^ ") " ^ ir_stmt_repr body
+  | Ir.Decl name -> "let " ^ name
+  | Ir.Assign (name, value) -> name ^ " = " ^ ir_expr_repr value
+  | Ir.Block stmts -> "{" ^ ir_repr stmts ^ "}"
+  | Ir.If (cond, thn, els) ->
+    let els_string =
+      match els with
+      | Some stmt -> " else " ^ ir_stmt_repr stmt
+      | None -> ""
+    in
+    "if " ^ ir_expr_repr cond ^ " " ^ ir_stmt_repr thn ^ els_string
+  | Ir.Return value -> "return " ^ ir_expr_repr value
+
+and ir_expr_repr = function
+  | Ir.Binary (op, lhs, rhs) ->
+    "(" ^ ir_expr_repr lhs ^ " " ^ binop_repr op ^ " " ^ ir_expr_repr rhs ^ ")"
+  | Ir.Unary (op, operand) -> unop_repr op ^ ir_expr_repr operand
+  | Ir.App (callee, args) -> ir_expr_repr callee ^ "(" ^ list_repr args ir_expr_repr ", " ^ ")"
+  | Ir.Lambda (params, body) -> "<" ^ list_repr params (fun p -> p) ", " ^ "> " ^ ir_stmt_repr body
+  | Ir.Var x -> x
+  | Ir.Number num -> string_of_float num
+  | Ir.Boolean bool -> string_of_bool bool
+  | Ir.Unit -> "()"

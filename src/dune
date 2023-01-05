@@ -10,4 +10,4 @@
  (name nox)
  (modules
   (:standard \ main))
- (modules_without_implementation ast diagnostic token types))
+ (modules_without_implementation ast diagnostic ir token types))
