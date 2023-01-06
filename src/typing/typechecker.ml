@@ -28,13 +28,13 @@ let exit_level () =
   decr current_level
 
 let gensym () =
-  let i = !current_id in
+  let id = !current_id in
   incr current_id;
   "'"
-  ^ String.make 1 (Char.chr (97 + (i mod 26)))
+  ^ String.make 1 (Char.chr (97 + (id mod 26)))
   ^
-  if i >= 26 then
-    string_of_int (i / 26)
+  if id >= 26 then
+    string_of_int (id / 26)
   else
     ""
 
@@ -208,11 +208,7 @@ and infer_unary env op operand =
 and infer_if env cond thn els =
   let cond_type = infer_expr env cond in
   let thn_type = infer_expr env thn in
-  let els_type =
-    match els with
-    | Some expr -> infer_expr env expr
-    | None -> Types.Unit
-  in
+  let els_type = infer_expr env els in
   unify Ast.(cond.span) Types.Boolean cond_type;
   unify Ast.(thn.span) els_type thn_type;
   thn_type

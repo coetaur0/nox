@@ -56,12 +56,7 @@ and ast_expr_repr expr =
   | Ast.Unary (op, operand) -> unop_repr op ^ ast_expr_repr operand
   | Ast.Block stmts -> "{" ^ ast_repr stmts ^ "}"
   | Ast.If (cond, thn, els) ->
-    let els_string =
-      match els with
-      | Some expr -> " else " ^ ast_expr_repr expr
-      | None -> ""
-    in
-    "if " ^ ast_expr_repr cond ^ " " ^ ast_expr_repr thn ^ els_string
+    "if " ^ ast_expr_repr cond ^ " " ^ ast_expr_repr thn ^ " else " ^ ast_expr_repr els
   | Ast.App (callee, args) -> ast_expr_repr callee ^ "(" ^ list_repr args ast_expr_repr ", " ^ ")"
   | Ast.Lambda (params, body) ->
     "<" ^ list_repr params (fun p -> p) ", " ^ "> " ^ ast_expr_repr body
@@ -89,17 +84,11 @@ let rec ir_repr stmts = list_repr stmts ir_stmt_repr "; "
 
 and ir_stmt_repr = function
   | Ir.Fn (name, params, body) ->
-    "fn " ^ name ^ "(" ^ list_repr params (fun p -> p) ", " ^ ") " ^ ir_stmt_repr body
+    "fn " ^ name ^ "(" ^ list_repr params (fun p -> p) ", " ^ ") {" ^ ir_repr body ^ "}"
   | Ir.Decl name -> "let " ^ name
   | Ir.Assign (name, value) -> name ^ " = " ^ ir_expr_repr value
-  | Ir.Block stmts -> "{" ^ ir_repr stmts ^ "}"
   | Ir.If (cond, thn, els) ->
-    let els_string =
-      match els with
-      | Some stmt -> " else " ^ ir_stmt_repr stmt
-      | None -> ""
-    in
-    "if " ^ ir_expr_repr cond ^ " " ^ ir_stmt_repr thn ^ els_string
+    "if " ^ ir_expr_repr cond ^ " {" ^ ir_repr thn ^ "} else {" ^ ir_repr els ^ "}"
   | Ir.Return value -> "return " ^ ir_expr_repr value
 
 and ir_expr_repr = function
@@ -107,7 +96,8 @@ and ir_expr_repr = function
     "(" ^ ir_expr_repr lhs ^ " " ^ binop_repr op ^ " " ^ ir_expr_repr rhs ^ ")"
   | Ir.Unary (op, operand) -> unop_repr op ^ ir_expr_repr operand
   | Ir.App (callee, args) -> ir_expr_repr callee ^ "(" ^ list_repr args ir_expr_repr ", " ^ ")"
-  | Ir.Lambda (params, body) -> "<" ^ list_repr params (fun p -> p) ", " ^ "> " ^ ir_stmt_repr body
+  | Ir.Lambda (params, body) ->
+    "<" ^ list_repr params (fun p -> p) ", " ^ "> {" ^ ir_repr body ^ "}"
   | Ir.Var x -> x
   | Ir.Number num -> string_of_float num
   | Ir.Boolean bool -> string_of_bool bool

@@ -57,7 +57,8 @@ let check_invalid_block_expr _ = check_errors "{let x = 3; x" ["1:14..1:14: expe
 
 let check_if_expr _ =
   check "if c == 0 {42} else if c > 0 {-42} else {1}"
-    "if (c == 0.) {42.} else if (c > 0.) {-42.} else {1.}"
+    "if (c == 0.) {42.} else if (c > 0.) {-42.} else {1.}";
+  check "if true {42}" "if true {42.} else {}"
 
 let check_invalid_if_expr _ =
   check_errors "if true {0} else" ["1:17..1:17: expect a '{'."; "1:17..1:17: expect a '}'."]

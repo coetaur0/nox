@@ -161,8 +161,8 @@ and parse_app parser =
 and parse_primary parser =
   match parser.token.kind with
   | Token.LBrace -> parse_block parser
-  | Token.Lt -> parse_lambda parser
   | Token.If -> parse_if parser
+  | Token.Lt -> parse_lambda parser
   | Token.Name -> parse_var parser
   | Token.Number -> parse_number parser
   | Token.Boolean -> parse_boolean parser
@@ -182,14 +182,6 @@ and parse_block parser =
   in
   Ast.{value = Block stmts; span = Source.{left; right}}
 
-and parse_lambda parser =
-  let start = (advance parser).span in
-  let params = parse_list parser (parse_name "expect a parameter name") Token.Comma [Token.Gt] in
-  synchronize parser [Token.Gt; Token.LBrace];
-  ignore (consume parser Token.Gt "expect a '>'");
-  let body = parse_block parser in
-  Ast.{value = Lambda (params, body); span = Source.merge start body.span}
-
 and parse_if parser =
   let start = (advance parser).span in
   let cond = parse_expr parser in
@@ -199,18 +191,21 @@ and parse_if parser =
     if parser.token.kind = Token.Else then (
       ignore (advance parser);
       if parser.token.kind = Token.If then
-        Some (parse_if parser)
+        parse_if parser
       else
-        Some (parse_block parser)
+        parse_block parser
     ) else
-      None
+      Ast.{value = Block []; span = Source.{left = thn.span.right; right = thn.span.right}}
   in
-  let span_end =
-    match els with
-    | Some expr -> expr.span
-    | None -> thn.span
-  in
-  Ast.{value = If (cond, thn, els); span = Source.merge start span_end}
+  Ast.{value = If (cond, thn, els); span = Source.merge start els.span}
+
+and parse_lambda parser =
+  let start = (advance parser).span in
+  let params = parse_list parser (parse_name "expect a parameter name") Token.Comma [Token.Gt] in
+  synchronize parser [Token.Gt; Token.LBrace];
+  ignore (consume parser Token.Gt "expect a '>'");
+  let body = parse_block parser in
+  Ast.{value = Lambda (params, body); span = Source.merge start body.span}
 
 and parse_var parser =
   let span = (advance parser).span in

@@ -39,7 +39,7 @@ and expr =
   | Binary of binop * expr node * expr node
   | Unary of unop * expr node
   | Block of stmt node list
-  | If of expr node * expr node * expr node option
+  | If of expr node * expr node * expr node
   | App of expr node * expr node list
   | Lambda of name list * expr node
   | Var of name
