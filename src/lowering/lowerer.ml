@@ -29,12 +29,26 @@ let mangle_list env names =
 
 (* ----- Lowering functions --------------------------------------------------------------------- *)
 
-let rec lower_stmts env = function
-  | [Ast.{value = Expr expr; span}] -> return env Ast.{value = expr; span}
+let rec collect_fns env = function
   | stmt :: rest ->
-    let (env', ir_stmts) = lower_stmt env stmt in
-    ir_stmts @ lower_stmts env' rest
-  | [] -> [Ir.Return Ir.Unit]
+    let env' =
+      match Ast.(stmt.value) with
+      | Ast.Fn (name, _, _) -> Env.add name (gensym name) env
+      | _ -> env
+    in
+    collect_fns env' rest
+  | [] -> env
+
+let rec lower_stmts env stmts =
+  let env' = collect_fns env stmts in
+  let rec lower_stmts' env = function
+    | [Ast.{value = Expr expr; span}] -> return env Ast.{value = expr; span}
+    | stmt :: rest ->
+      let (env', ir_stmts) = lower_stmt env stmt in
+      ir_stmts @ lower_stmts' env' rest
+    | [] -> [Ir.Return Ir.Unit]
+  in
+  lower_stmts' env' stmts
 
 and lower_stmt env node =
   match Ast.(node.value) with
@@ -43,9 +57,8 @@ and lower_stmt env node =
   | Ast.Expr expr -> (env, assign env "_" Ast.{value = expr; span = node.span})
 
 and lower_fn env name params body =
-  let (env', name') = mangle env name in
-  let (env'', params') = mangle_list env' params in
-  (env', [Ir.Fn (name', params', return env'' body)])
+  let (env', params') = mangle_list env params in
+  (env, [Ir.Fn (Env.find name env, params', return env' body)])
 
 and return env node =
   match Ast.(node.value) with

@@ -16,11 +16,28 @@ let check string expected =
 
 (* ----- Test functions ------------------------------------------------------------------------- *)
 
-let check_fn _ =
-  check "fn add(x, y) {x + y}" "fn add0(x1, y2) {return (x1 + y2)}; return ()";
-  check "fn fib(n) {if n == 0 {0} else if n == 1 {1} else {fib(n - 1) + fib(n - 2)}}; fib"
-    "fn fib0(n1) {if (n1 == 0.) {return 0.} else {if (n1 == 1.) {return 1.} else {return (fib0((n1 \
-     - 1.)) + fib0((n1 - 2.)))}}}; return fib0"
+let check_polymorphic_fn _ =
+  check "fn f(x) {x}; f(true); f(1)" "fn f0(x1) {return x1}; _ = f0(true); return f0(1.)";
+  check "fn f(a, b) {if true {a} else {b}}; f"
+    "fn f0(a1, b2) {if true {return a1} else {return b2}}; return f0"
+
+let check_recursive_fn _ =
+  check "fn fib(n) {if n <= 1 {1} else {fib(n - 1) + fib(n - 2)}}; fib"
+    "fn fib0(n1) {if (n1 <= 1.) {return 1.} else {return (fib0((n1 - 1.)) + fib0((n1 - 2.)))}}; \
+     return fib0";
+  check "fn fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact"
+    "fn fact0(n1) {if (n1 <= 0.) {return 1.} else {return (fact0((n1 - 1.)) * n1)}}; return fact0"
+
+let check_mutually_recursive_fn _ =
+  check "fn f(x) {x}; fn g(x) {f(true)}; fn h(x) {f(1)}; g"
+    "fn f0(x3) {return x3}; fn g1(x4) {return f0(true)}; fn h2(x5) {return f0(1.)}; return g1";
+  check
+    "fn even(n) {if n == 0 {true} else {odd(n - 1)}}; fn odd(n) {if n == 0 {false} else {even(n - \
+     1)}}; even"
+    "fn even0(n2) {if (n2 == 0.) {return true} else {return odd1((n2 - 1.))}}; fn odd1(n3) {if (n3 \
+     == 0.) {return false} else {return even0((n3 - 1.))}}; return even0"
+
+let check_empty_fn _ = check "fn f() {}; f" "fn f0() {return ()}; return f0"
 
 let check_var _ =
   check "let x = 42; x" "let x0; x0 = 42.; return x0";
@@ -60,7 +77,10 @@ let check_unit _ = check "()" "return ()"
 
 let tests =
   "AST lowering tests"
-  >::: [ "Functions" >:: check_fn;
+  >::: [ "Polymorphic functions" >:: check_polymorphic_fn;
+         "Recursive functions" >:: check_recursive_fn;
+         "Mutually recursive functions" >:: check_mutually_recursive_fn;
+         "Empty functions" >:: check_empty_fn;
          "Variables" >:: check_var;
          "Binary expressions" >:: check_binary_expr;
          "Unary expressions" >:: check_unary_expr;
