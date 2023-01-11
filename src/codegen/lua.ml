@@ -6,11 +6,6 @@ let rec indent = function
 
 (* ----- Code emitting functions ---------------------------------------------------------------- *)
 
-let rec hoist_fns level = function
-  | Ir.Fn (name, _, _) :: rest -> indent level ^ "local " ^ name ^ "\n" ^ hoist_fns level rest
-  | _ :: rest -> hoist_fns level rest
-  | [] -> ""
-
 let emit_binop = function
   | Ast.Or -> "or"
   | Ast.And -> "and"
@@ -29,28 +24,41 @@ let emit_unop = function
   | Ast.Not -> "not "
   | Ast.Neg -> "-"
 
-let rec emit_stmts level stmts =
-  let rec emit_stmts' level = function
-    | stmt :: rest -> indent level ^ emit_stmt level stmt ^ "\n" ^ emit_stmts' level rest
-    | [] -> ""
-  in
-  hoist_fns level stmts ^ emit_stmts' level stmts
+let rec collect_decls level = function
+  | stmt :: rest ->
+    let (decls, fns, stmts) = collect_decls level rest in
+    let (decl, fn, stmts) =
+      match stmt with
+      | Ir.Fn (name, _, _) ->
+        (indent level ^ "local " ^ name ^ "\n", emit_stmt level stmt ^ "\n", stmts)
+      | Ir.Decl x -> (indent level ^ "local " ^ x ^ "\n", "", stmts)
+      | _ -> ("", "", stmt :: stmts)
+    in
+    (decl ^ decls, fn ^ fns, stmts)
+  | [] -> ("", "", [])
 
-and emit_stmt level = function
+and emit_stmts level stmts =
+  let (decls, fns, stmts) = collect_decls level stmts in
+  decls ^ fns ^ Printer.list_repr stmts (emit_stmt level) "\n"
+
+and emit_stmt level stmt =
+  indent level
+  ^
+  match stmt with
   | Ir.Fn (name, params, body) ->
     name ^ " = function("
     ^ Printer.list_repr params (fun p -> p) ", "
     ^ ")\n"
     ^ emit_stmts (level + 1) body
-    ^ indent level ^ "end"
+    ^ "\n" ^ indent level ^ "end"
   | Ir.Decl name -> "local " ^ name
   | Ir.Assign (name, value) -> name ^ " = " ^ emit_expr level value
   | Ir.If (cond, thn, els) ->
     "if " ^ emit_expr level cond ^ " then\n"
     ^ emit_stmts (level + 1) thn
-    ^ indent level ^ "else\n"
+    ^ "\n" ^ indent level ^ "else\n"
     ^ emit_stmts (level + 1) els
-    ^ indent level ^ "end"
+    ^ "\n" ^ indent level ^ "end"
   | Ir.Return value -> "return " ^ emit_expr level value
 
 and emit_expr level = function
@@ -64,7 +72,7 @@ and emit_expr level = function
     ^ Printer.list_repr params (fun p -> p) ", "
     ^ ")\n"
     ^ emit_stmts (level + 1) body
-    ^ indent level ^ "end"
+    ^ "\n" ^ indent level ^ "end"
   | Ir.Var x -> x
   | Ir.Number num -> string_of_float num
   | Ir.Boolean bool -> string_of_bool bool
