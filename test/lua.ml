@@ -19,7 +19,7 @@ let check string expected =
 
 let check_polymorphic_fn _ =
   check "fn f(x) {x}; f(true); f(1)"
-    "local f0\nf0 = function(x1)\n  return x1\nend\n_ = f0(true)\nreturn f0(1.)"
+    "local f0\nf0 = function(x1)\n  return x1\nend\n_ = f0(true)\nreturn f0(1.)\n"
 
 let check_recursive_fn _ =
   check "fn fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact(5)"
@@ -31,7 +31,7 @@ let check_recursive_fn _ =
     \    return (fact0((n1 - 1.)) * n1)\n\
     \  end\n\
      end\n\
-     return fact0(5.)"
+     return fact0(5.)\n"
 
 let check_mutually_recursive_fn _ =
   check
@@ -53,7 +53,7 @@ let check_mutually_recursive_fn _ =
     \    return even0((n3 - 1.))\n\
     \  end\n\
      end\n\
-     return even0(12.)"
+     return even0(12.)\n"
 
 let check_nested_fn _ =
   check "fn f(x) {fn g(x) {x + 1}; g(x)}; fn g(x) {x * 2}; f(3)"
@@ -69,16 +69,16 @@ let check_nested_fn _ =
      g1 = function(x5)\n\
     \  return (x5 * 2.)\n\
      end\n\
-     return f0(3.)"
+     return f0(3.)\n"
 
 let check_forward_ref_fn _ =
   check "let x = f(); fn f() {42}"
-    "local x1\nlocal f0\nf0 = function()\n  return 42.\nend\nx1 = f0()\nreturn nil"
+    "local x1\nlocal f0\nf0 = function()\n  return 42.\nend\nx1 = f0()\nreturn nil\n"
 
 let check_empty_fn _ =
-  check "fn f() {}; f()" "local f0\nf0 = function()\n  return nil\nend\nreturn f0()"
+  check "fn f() {}; f()" "local f0\nf0 = function()\n  return nil\nend\nreturn f0()\n"
 
-let check_var _ = check "let x = 42; x" "local x0\nx0 = 42.\nreturn x0"
+let check_var _ = check "let x = 42; x" "local x0\nx0 = 42.\nreturn x0\n"
 
 let check_closure_capture _ =
   check "let x = 42; fn f() {x * 2}; let y = f(); y"
@@ -90,19 +90,19 @@ let check_closure_capture _ =
      end\n\
      x1 = 42.\n\
      y2 = f0()\n\
-     return y2"
+     return y2\n"
 
 let check_binary_expr _ =
-  check "55 * 3 + 1 - 2" "return (((55. * 3.) + 1.) - 2.)";
-  check "let x = 42; x + 33" "local x0\nx0 = 42.\nreturn (x0 + 33.)"
+  check "55 * 3 + 1 - 2" "return (((55. * 3.) + 1.) - 2.)\n";
+  check "let x = 42; x + 33" "local x0\nx0 = 42.\nreturn (x0 + 33.)\n"
 
 let check_unary_expr _ =
-  check "--3" "return --3.";
-  check "!true" "return not true"
+  check "--3" "return --3.\n";
+  check "!true" "return not true\n"
 
 let check_block_expr _ =
   check "{let x = 1; if x < 1 {true} else {false}}"
-    "local x0\nx0 = 1.\nif (x0 < 1.) then\n  return true\nelse\n  return false\nend"
+    "local x0\nx0 = 1.\nif (x0 < 1.) then\n  return true\nelse\n  return false\nend\n"
 
 let check_if_expr _ =
   check "let n = 1; if n < 1 {-1} else if n == 1 {0} else {1}"
@@ -116,21 +116,22 @@ let check_if_expr _ =
     \  else\n\
     \    return 1.\n\
     \  end\n\
-     end"
+     end\n"
 
 let check_application_expr _ =
   check "fn f(x) {x + 1}; f(2)"
-    "local f0\nf0 = function(x1)\n  return (x1 + 1.)\nend\nreturn f0(2.)"
+    "local f0\nf0 = function(x1)\n  return (x1 + 1.)\nend\nreturn f0(2.)\n"
 
-let check_lambda_expr _ = check "<x, y> {x + y}" "return function(x0, y1)\n  return (x0 + y1)\nend"
+let check_lambda_expr _ =
+  check "<x, y> {x + y}" "return function(x0, y1)\n  return (x0 + y1)\nend\n"
 
-let check_number _ = check "42" "return 42."
+let check_number _ = check "42" "return 42.\n"
 
 let check_boolean _ =
-  check "true" "return true";
-  check "false" "return false"
+  check "true" "return true\n";
+  check "false" "return false\n"
 
-let check_unit _ = check "()" "return nil"
+let check_unit _ = check "()" "return nil\n"
 
 (* ----- Tests ---------------------------------------------------------------------------------- *)
 

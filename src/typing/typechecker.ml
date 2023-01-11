@@ -30,13 +30,12 @@ let exit_level () =
 let gensym () =
   let id = !current_id in
   incr current_id;
-  "'"
-  ^ String.make 1 (Char.chr (97 + (id mod 26)))
-  ^
-  if id >= 26 then
-    string_of_int (id / 26)
-  else
-    ""
+  Printf.sprintf "'%s%s"
+    (String.make 1 (Char.chr (97 + (id mod 26))))
+    ( if id >= 26 then
+      string_of_int (id / 26)
+    else
+      "" )
 
 let new_var level = Types.Var (ref (Types.Free (gensym (), level)))
 
@@ -100,8 +99,8 @@ let rec unify span lhs rhs =
       raise
         (TypeError
            { message =
-               "expect a value of type " ^ Printer.type_repr lhs ^ ", but found a "
-               ^ Printer.type_repr rhs ^ " value";
+               Printf.sprintf "expect a value of type %s, but found a %s value"
+                 (Printer.type_repr lhs) (Printer.type_repr rhs);
              span } )
   )
 
@@ -174,7 +173,7 @@ and infer_expr env node =
   | Ast.Var x -> (
     try instantiate (Env.find x env)
     with Not_found ->
-      raise (TypeError {message = "unknown variable '" ^ x ^ "'"; span = node.span}) )
+      raise (TypeError {message = Printf.sprintf "unknown variable '%s'" x; span = node.span}) )
   | Ast.Number _ -> Types.Number
   | Ast.Boolean _ -> Types.Boolean
   | Ast.Unit -> Types.Unit
@@ -222,9 +221,7 @@ and infer_app env callee args =
       if n_args <> n_params then
         raise
           (TypeError
-             { message =
-                 "expect " ^ string_of_int n_params ^ " arguments, but " ^ string_of_int n_args
-                 ^ " were found";
+             { message = Printf.sprintf "expect %d arguments, but %d were found" n_params n_args;
                span = Ast.(callee.span) } )
       else
         (params, return)

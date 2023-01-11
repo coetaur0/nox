@@ -11,7 +11,7 @@ let reset_id () = current_id := 0
 let gensym base =
   let id = !current_id in
   incr current_id;
-  base ^ string_of_int id
+  Printf.sprintf "%s%d" base id
 
 let mangle env name =
   let name' = gensym name in
