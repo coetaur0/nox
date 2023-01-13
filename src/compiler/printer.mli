@@ -17,5 +17,8 @@ val ast_repr : Ast.stmt Ast.node list -> string
 (** [type_repr ty] is a string representation for a type. *)
 val type_repr : Types.t -> string
 
+(** [value_repr value] is a string representation for a runtime value. *)
+val value_repr : Values.t -> string
+
 (** [ir_repr stmts] is a string representation for a sequence of IR statements. *)
 val ir_repr : Ir.stmt list -> string

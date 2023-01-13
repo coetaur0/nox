@@ -1,3 +1,3 @@
 (tests
- (names lexer parser typechecker lowerer lua)
+ (names lexer parser typechecker interpreter lowerer lua)
  (libraries nox ounit2))

@@ -27,14 +27,14 @@ let emit_unop = function
 let rec collect_decls level = function
   | stmt :: rest ->
     let (decls, fns, stmts) = collect_decls level rest in
-    let (decl, fn, stmts) =
+    let (decl, fn, stmts') =
       match stmt with
       | Ir.Fn (name, _, _) ->
         (Printf.sprintf "%slocal %s\n" (indent level) name, emit_stmt level stmt, stmts)
       | Ir.Decl x -> (Printf.sprintf "%slocal %s\n" (indent level) x, "", stmts)
       | _ -> ("", "", stmt :: stmts)
     in
-    (decl ^ decls, fn ^ fns, stmts)
+    (decl ^ decls, fn ^ fns, stmts')
   | [] -> ("", "", [])
 
 and emit_stmts level stmts =

@@ -30,7 +30,8 @@ let check_polymorphic_fn _ =
   check "fn f(a, b) {if true {a} else {b}}; f" "('a, 'a) -> 'a"
 
 let check_recursive_fn _ =
-  check "fn fib(n) {if n <= 1 {1} else {fib(n - 1) + fib(n - 2)}}; fib" "(number) -> number";
+  check "fn fib(n) {if n == 0 {0} else if n == 1 {1} else {fib(n - 1) + fib(n - 2)}}; fib"
+    "(number) -> number";
   check "fn fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact" "(number) -> number"
 
 let check_mutually_recursive_fn _ =

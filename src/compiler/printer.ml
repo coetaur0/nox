@@ -81,6 +81,14 @@ let rec type_repr ty =
   | Types.Boolean -> "boolean"
   | Types.Unit -> "unit"
 
+(* ----- Runtime values representation functions ------------------------------------------------ *)
+
+let value_repr = function
+  | Values.Closure _ -> "<closure>"
+  | Values.Number num -> string_of_float num
+  | Values.Boolean bool -> string_of_bool bool
+  | Values.Unit -> "()"
+
 (* ----- IR representation functions ------------------------------------------------------------ *)
 
 let rec ir_repr stmts = list_repr stmts ir_stmt_repr "; "
