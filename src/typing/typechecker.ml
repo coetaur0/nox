@@ -4,7 +4,7 @@ exception TypeError of Diagnostic.t
 
 (* ----- Typing environment --------------------------------------------------------------------- *)
 
-module Env = Map.Make (String)
+type env = Types.t Environment.t
 
 (* ----- Type variables and generalisation levels ----------------------------------------------- *)
 
@@ -113,7 +113,7 @@ let rec collect_fn_types env = function
     | Ast.Fn (name, params, _) ->
       let param_types = List.map (fun _ -> new_var !current_level) params in
       let ty = Types.Fn (param_types, new_var !current_level) in
-      Env.add name ty env'
+      Environment.add name ty env'
     | _ -> env' )
   | [] -> env
 
@@ -122,13 +122,11 @@ let rec infer_stmts env stmts =
   let env' = collect_fn_types env stmts in
   exit_level ();
   let rec infer_stmts' env = function
-    | [stmt] ->
-      let (ty, _) = infer_stmt env stmt in
-      ty
+    | [stmt] -> infer_stmt env stmt
     | stmt :: rest ->
-      let (_, env') = infer_stmt env stmt in
+      let (env', _) = infer_stmt env stmt in
       infer_stmts' env' rest
-    | [] -> Types.Unit
+    | [] -> (env, Types.Unit)
   in
   infer_stmts' env' stmts
 
@@ -136,16 +134,16 @@ and infer_stmt env stmt =
   match Ast.(stmt.value) with
   | Ast.Fn (name, params, body) -> infer_fn env name params body
   | Ast.Let (name, value) -> infer_let env name value
-  | Ast.Expr expr -> (infer_expr env Ast.{value = expr; span = stmt.span}, env)
+  | Ast.Expr expr -> (env, infer_expr env Ast.{value = expr; span = stmt.span})
 
 and infer_fn env name params body =
   enter_level ();
   let ty =
-    match Env.find name env with
+    match Environment.find name env with
     | Types.Fn (param_types, _) ->
       let env' =
         List.fold_left2
-          (fun env param param_type -> Env.add param param_type env)
+          (fun env param param_type -> Environment.add param param_type env)
           env params param_types
       in
       let return_type = infer_expr env' body in
@@ -154,24 +152,26 @@ and infer_fn env name params body =
   in
   exit_level ();
   let ty' = generalise ty in
-  (Types.Unit, Env.add name ty' env)
+  (Environment.add name ty' env, Types.Unit)
 
 and infer_let env name value =
   enter_level ();
   let ty = infer_expr env value in
   exit_level ();
-  (Types.Unit, Env.add name (generalise ty) env)
+  (Environment.add name (generalise ty) env, Types.Unit)
 
 and infer_expr env node =
   match Ast.(node.value) with
   | Ast.Binary (op, lhs, rhs) -> infer_binary env op lhs rhs
   | Ast.Unary (op, operand) -> infer_unary env op operand
-  | Ast.Block stmts -> infer_stmts env stmts
+  | Ast.Block stmts ->
+    let (_, ty) = infer_stmts env stmts in
+    ty
   | Ast.If (cond, thn, els) -> infer_if env cond thn els
   | Ast.App (callee, args) -> infer_app env callee args
   | Ast.Lambda (params, body) -> infer_lambda env params body
   | Ast.Var x -> (
-    try instantiate (Env.find x env)
+    try instantiate (Environment.find x env)
     with Not_found ->
       raise (TypeError {message = Printf.sprintf "unknown variable '%s'" x; span = node.span}) )
   | Ast.Number _ -> Types.Number
@@ -243,12 +243,12 @@ and infer_lambda env params body =
   let param_types = List.map (fun _ -> new_var !current_level) params in
   let env' =
     List.fold_left2
-      (fun env param param_type -> Env.add param param_type env)
+      (fun env param param_type -> Environment.add param param_type env)
       env params param_types
   in
   let return_type = infer_expr env' body in
   Types.Fn (param_types, return_type)
 
-let infer stmts =
+let infer env stmts =
   reset_level ();
-  infer_stmts Env.empty stmts
+  infer_stmts env stmts

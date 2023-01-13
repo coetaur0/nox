@@ -7,7 +7,7 @@ let check string expected =
   let source = Source.make string in
   try
     let stmts = Parser.parse source in
-    let ty = Typechecker.infer stmts in
+    let (_, ty) = Typechecker.infer Environment.empty stmts in
     assert_equal expected (Printer.type_repr ty)
   with
   | Parser.SyntaxError _ -> assert_failure "Expect a valid program"
@@ -17,7 +17,7 @@ let check_error string expected =
   let source = Source.make string in
   try
     let stmts = Parser.parse source in
-    ignore (Typechecker.infer stmts);
+    ignore (Typechecker.infer Environment.empty stmts);
     assert_failure "Expect an ill-typed program"
   with
   | Parser.SyntaxError _ -> assert_failure "Expect a valid program"

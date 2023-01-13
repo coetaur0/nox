@@ -1,7 +1,3 @@
-(* ----- Lowering environment ------------------------------------------------------------------- *)
-
-module Env = Map.Make (String)
-
 (* ----- Utility functions ---------------------------------------------------------------------- *)
 
 let current_id = ref 0
@@ -15,7 +11,7 @@ let gensym base =
 
 let mangle env name =
   let name' = gensym name in
-  (Env.add name name' env, name')
+  (Environment.add name name' env, name')
 
 let mangle_list env names =
   let (env', names') =
@@ -33,7 +29,7 @@ let rec collect_fns env = function
   | stmt :: rest ->
     let env' =
       match Ast.(stmt.value) with
-      | Ast.Fn (name, _, _) -> Env.add name (gensym name) env
+      | Ast.Fn (name, _, _) -> Environment.add name (gensym name) env
       | _ -> env
     in
     collect_fns env' rest
@@ -58,7 +54,7 @@ and lower_stmt env node =
 
 and lower_fn env name params body =
   let (env', params') = mangle_list env params in
-  (env, [Ir.Fn (Env.find name env, params', return env' body)])
+  (env, [Ir.Fn (Environment.find name env, params', return env' body)])
 
 and return env node =
   match Ast.(node.value) with
@@ -103,7 +99,7 @@ and lower_expr env node =
     ([Ir.Decl tmp] @ ir_stmts, Ir.Var tmp)
   | Ast.App (callee, args) -> lower_app env callee args
   | Ast.Lambda (params, body) -> lower_lambda env params body
-  | Ast.Var x -> ([], Ir.Var (Env.find x env))
+  | Ast.Var x -> ([], Ir.Var (Environment.find x env))
   | Ast.Number num -> ([], Ir.Number num)
   | Ast.Boolean bool -> ([], Ir.Boolean bool)
   | Ast.Unit -> ([], Ir.Unit)
@@ -135,4 +131,4 @@ and lower_lambda env params body =
 
 let lower stmts =
   reset_id ();
-  lower_stmts Env.empty stmts
+  lower_stmts Environment.empty stmts

@@ -4,7 +4,7 @@ let () =
   let source = Source.make "let x = 42; fn f() {x * 2}; let y = f(); y" in
   try
     let stmts = Parser.parse source in
-    let ty = Typechecker.infer stmts in
+    let (_, ty) = Typechecker.infer Environment.empty stmts in
     print_endline ("Type: " ^ Printer.type_repr ty ^ "\n");
     let ir = Lowerer.lower stmts in
     print_endline ("IR representation:\n" ^ Printer.ir_repr ir ^ "\n");

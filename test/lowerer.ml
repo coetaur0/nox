@@ -7,7 +7,7 @@ let check string expected =
   let source = Source.make string in
   try
     let stmts = Parser.parse source in
-    ignore (Typechecker.infer stmts);
+    ignore (Typechecker.infer Environment.empty stmts);
     let ir = Lowerer.lower stmts in
     assert_equal expected (Printer.ir_repr ir)
   with
