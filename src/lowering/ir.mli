@@ -2,7 +2,7 @@
 
 (** An IR statement. *)
 type stmt =
-  | Fn of Ast.name * Ast.name list * stmt list
+  | Fn of (Ast.name * Ast.name list * stmt list) list
   | Decl of Ast.name
   | Assign of Ast.name * expr
   | If of expr * stmt list * stmt list

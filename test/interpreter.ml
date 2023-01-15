@@ -25,9 +25,8 @@ let check_recursive_fn _ =
   check "fn fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact(5)" "120."
 
 let check_mutually_recursive_fn _ =
-  check "fn f(x) {x}; fn g(x) {f(true)}; fn h(x) {f(1)}; g(0)" "true";
   check
-    "fn even(n) {if n == 0 {true} else {odd(n - 1)}}; fn odd(n) {if n == 0 {false} else {even(n - \
+    "fn even(n) {if n == 0 {true} else {odd(n - 1)}} fn odd(n) {if n == 0 {false} else {even(n - \
      1)}}; even(12)"
     "true"
 

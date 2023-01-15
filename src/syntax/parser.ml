@@ -80,7 +80,12 @@ and parse_stmt parser =
     Ast.{value = Expr node.value; span = node.span}
 
 and parse_fn parser =
-  let start = (advance parser).span in
+  let start = parser.token.span in
+  let (fns, span_end) = parse_fns parser in
+  Ast.{value = Fn fns; span = Source.merge start span_end}
+
+and parse_fns parser =
+  ignore (advance parser);
   let name = parse_name "expect a function name" parser in
   ignore (consume parser Token.LParen "expect a '('");
   let params =
@@ -90,7 +95,11 @@ and parse_fn parser =
   ignore (consume parser Token.RParen "expect a ')'");
   synchronize parser [Token.LBrace];
   let body = parse_block parser in
-  Ast.{value = Fn (name, params, body); span = Source.merge start body.span}
+  if parser.token.kind = Token.Fn then (
+    let (rest, span_end) = parse_fns parser in
+    ((name, params, body) :: rest, span_end)
+  ) else
+    ([(name, params, body)], body.span)
 
 and parse_let parser =
   let start = (advance parser).span in

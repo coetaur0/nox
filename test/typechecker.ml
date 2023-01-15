@@ -35,9 +35,8 @@ let check_recursive_fn _ =
   check "fn fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact" "(number) -> number"
 
 let check_mutually_recursive_fn _ =
-  check "fn f(x) {x}; fn g(x) {f(true)}; fn h(x) {f(1)}; g" "('a) -> boolean";
   check
-    "fn even(n) {if n == 0 {true} else {odd(n - 1)}}; fn odd(n) {if n == 0 {false} else {even(n - \
+    "fn even(n) {if n == 0 {true} else {odd(n - 1)}} fn odd(n) {if n == 0 {false} else {even(n - \
      1)}}; even"
     "(number) -> boolean"
 

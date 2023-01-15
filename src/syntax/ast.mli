@@ -30,7 +30,7 @@ type unop =
 
 (** An AST statement. *)
 type stmt =
-  | Fn of name * name list * expr node
+  | Fn of (name * name list * expr node) list
   | Let of name * expr node
   | Expr of expr
 

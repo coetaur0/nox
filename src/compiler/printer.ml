@@ -45,8 +45,12 @@ let rec ast_repr stmts = list_repr stmts ast_stmt_repr "; "
 
 and ast_stmt_repr stmt =
   match Ast.(stmt.value) with
-  | Ast.Fn (name, params, body) ->
-    Printf.sprintf "fn %s(%s) %s" name (list_repr params (fun p -> p) ", ") (ast_expr_repr body)
+  | Ast.Fn fns ->
+    list_repr fns
+      (fun (name, params, body) ->
+        Printf.sprintf "fn %s(%s) %s" name (list_repr params (fun p -> p) ", ") (ast_expr_repr body)
+        )
+      " "
   | Ast.Let (name, value) -> Printf.sprintf "let %s = %s" name (ast_expr_repr value)
   | Ast.Expr expr -> ast_expr_repr {value = expr; span = stmt.span}
 
@@ -94,8 +98,11 @@ let value_repr = function
 let rec ir_repr stmts = list_repr stmts ir_stmt_repr "; "
 
 and ir_stmt_repr = function
-  | Ir.Fn (name, params, body) ->
-    Printf.sprintf "fn %s(%s) {%s}" name (list_repr params (fun p -> p) ", ") (ir_repr body)
+  | Ir.Fn fns ->
+    list_repr fns
+      (fun (name, params, body) ->
+        Printf.sprintf "fn %s(%s) {%s}" name (list_repr params (fun p -> p) ", ") (ir_repr body) )
+      " "
   | Ir.Decl name -> Printf.sprintf "let %s" name
   | Ir.Assign (name, value) -> Printf.sprintf "%s = %s" name (ir_expr_repr value)
   | Ir.If (cond, thn, els) ->

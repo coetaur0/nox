@@ -25,36 +25,29 @@ let mangle_list env names =
 
 (* ----- Lowering functions --------------------------------------------------------------------- *)
 
-let rec collect_fns env = function
+let rec lower_stmts env = function
+  | [Ast.{value = Expr expr; span}] -> return env Ast.{value = expr; span}
   | stmt :: rest ->
-    let env' =
-      match Ast.(stmt.value) with
-      | Ast.Fn (name, _, _) -> Environment.add name (gensym name) env
-      | _ -> env
-    in
-    collect_fns env' rest
-  | [] -> env
-
-let rec lower_stmts env stmts =
-  let env' = collect_fns env stmts in
-  let rec lower_stmts' env = function
-    | [Ast.{value = Expr expr; span}] -> return env Ast.{value = expr; span}
-    | stmt :: rest ->
-      let (env', ir_stmts) = lower_stmt env stmt in
-      ir_stmts @ lower_stmts' env' rest
-    | [] -> [Ir.Return Ir.Unit]
-  in
-  lower_stmts' env' stmts
+    let (env', ir_stmts) = lower_stmt env stmt in
+    ir_stmts @ lower_stmts env' rest
+  | [] -> [Ir.Return Ir.Unit]
 
 and lower_stmt env node =
   match Ast.(node.value) with
-  | Ast.Fn (name, params, body) -> lower_fn env name params body
+  | Ast.Fn fns -> lower_fns env fns
   | Ast.Let (name, value) -> lower_let env name value
   | Ast.Expr expr -> (env, assign env "_" Ast.{value = expr; span = node.span})
 
+and lower_fns env fns =
+  let env' =
+    List.fold_left (fun env' (name, _, _) -> Environment.add name (gensym name) env') env fns
+  in
+  let ir_fns = List.map (fun (name, params, body) -> lower_fn env' name params body) fns in
+  (env', [Ir.Fn ir_fns])
+
 and lower_fn env name params body =
   let (env', params') = mangle_list env params in
-  (env, [Ir.Fn (Environment.find name env, params', return env' body)])
+  (Environment.find name env, params', return env' body)
 
 and return env node =
   match Ast.(node.value) with

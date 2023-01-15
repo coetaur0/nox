@@ -1,34 +1,25 @@
 (* ----- Interpreter functions ------------------------------------------------------------------ *)
 
-let rec collect_fns env = function
+let rec eval_stmts env = function
+  | [stmt] -> eval_stmt env stmt
   | stmt :: rest ->
-    let (env', stmts) = collect_fns env rest in
-    let stmts' =
-      match Ast.(stmt.value) with
-      | Ast.Fn (name, params, body) ->
-        env' := Environment.add name (Values.Closure (env', params, body)) !env';
-        stmts
-      | _ -> stmt :: stmts
-    in
-    (env', stmts')
-  | [] -> (env, [])
-
-let rec eval_stmts env stmts =
-  let (fn_env, stmts') = collect_fns (ref env) stmts in
-  let rec eval_stmts' env = function
-    | [stmt] -> eval_stmt env stmt
-    | stmt :: rest ->
-      let (env', _) = eval_stmt env stmt in
-      eval_stmts' env' rest
-    | [] -> (env, Values.Unit)
-  in
-  eval_stmts' !fn_env stmts'
+    let (env', _) = eval_stmt env stmt in
+    eval_stmts env' rest
+  | [] -> (env, Values.Unit)
 
 and eval_stmt env node =
   match Ast.(node.value) with
+  | Ast.Fn fns -> eval_fns env fns
   | Ast.Let (name, value) -> (Environment.add name (eval_expr env value) env, Values.Unit)
   | Ast.Expr expr -> (env, eval_expr env Ast.{value = expr; span = node.span})
-  | _ -> failwith "Unreachable case"
+
+and eval_fns env fns =
+  let env' = ref env in
+  List.iter
+    (fun (name, params, body) ->
+      env' := Environment.add name (Values.Closure (env', params, body)) !env' )
+    fns;
+  (!env', Values.Unit)
 
 and eval_expr env node =
   match Ast.(node.value) with

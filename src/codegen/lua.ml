@@ -24,40 +24,41 @@ let emit_unop = function
   | Ast.Not -> "not "
   | Ast.Neg -> "-"
 
-let rec collect_decls level = function
-  | stmt :: rest ->
-    let (decls, fns, stmts) = collect_decls level rest in
-    let (decl, fn, stmts') =
-      match stmt with
-      | Ir.Fn (name, _, _) ->
-        (Printf.sprintf "%slocal %s\n" (indent level) name, emit_stmt level stmt, stmts)
-      | Ir.Decl x -> (Printf.sprintf "%slocal %s\n" (indent level) x, "", stmts)
-      | _ -> ("", "", stmt :: stmts)
-    in
-    (decl ^ decls, fn ^ fns, stmts')
-  | [] -> ("", "", [])
-
-and emit_stmts level stmts =
-  let (decls, fns, stmts) = collect_decls level stmts in
-  Printf.sprintf "%s%s%s" decls fns (Printer.list_repr stmts (emit_stmt level) "")
+let rec emit_stmts level stmts = Printer.list_repr stmts (emit_stmt level) "\n"
 
 and emit_stmt level stmt =
-  Printf.sprintf "%s%s\n" (indent level)
-    ( match stmt with
-    | Ir.Fn (name, params, body) ->
-      Printf.sprintf "%s = function(%s)\n%s%send" name
-        (Printer.list_repr params (fun p -> p) ", ")
-        (emit_stmts (level + 1) body)
-        (indent level)
-    | Ir.Decl name -> Printf.sprintf "local %s" name
-    | Ir.Assign (name, value) -> Printf.sprintf "%s = %s" name (emit_expr level value)
-    | Ir.If (cond, thn, els) ->
-      Printf.sprintf "if %s then\n%s%selse\n%s%send" (emit_expr level cond)
-        (emit_stmts (level + 1) thn)
-        (indent level)
-        (emit_stmts (level + 1) els)
-        (indent level)
-    | Ir.Return value -> Printf.sprintf "return %s" (emit_expr level value) )
+  match stmt with
+  | Ir.Fn fns -> emit_fns level fns
+  | Ir.Decl name -> Printf.sprintf "%slocal %s" (indent level) name
+  | Ir.Assign (name, value) ->
+    Printf.sprintf "%s%s = %s" (indent level) name (emit_expr level value)
+  | Ir.If (cond, thn, els) -> emit_if level cond thn els
+  | Ir.Return value -> Printf.sprintf "%sreturn %s" (indent level) (emit_expr level value)
+
+and emit_fns level fns =
+  let (decls, defs) =
+    List.fold_right
+      (fun (name, params, body) (decls, defs) ->
+        ( Printf.sprintf "%slocal %s" (indent level) name :: decls,
+          emit_fn level name params body :: defs ) )
+      fns ([], [])
+  in
+  Printf.sprintf "%s\n%s"
+    (Printer.list_repr decls (fun d -> d) "\n")
+    (Printer.list_repr defs (fun d -> d) "\n")
+
+and emit_fn level name params body =
+  Printf.sprintf "%s%s = function(%s)\n%s\n%send" (indent level) name
+    (Printer.list_repr params (fun p -> p) ", ")
+    (emit_stmts (level + 1) body)
+    (indent level)
+
+and emit_if level cond thn els =
+  Printf.sprintf "%sif %s then\n%s\n%selse\n%s\n%send" (indent level) (emit_expr level cond)
+    (emit_stmts (level + 1) thn)
+    (indent level)
+    (emit_stmts (level + 1) els)
+    (indent level)
 
 and emit_expr level = function
   | Ir.Binary (op, lhs, rhs) ->
@@ -66,7 +67,7 @@ and emit_expr level = function
   | Ir.App (callee, args) ->
     Printf.sprintf "%s(%s)" (emit_expr level callee) (Printer.list_repr args (emit_expr level) ", ")
   | Ir.Lambda (params, body) ->
-    Printf.sprintf "function(%s)\n%s%send"
+    Printf.sprintf "function(%s)\n%s\n%send"
       (Printer.list_repr params (fun p -> p) ", ")
       (emit_stmts (level + 1) body)
       (indent level)
