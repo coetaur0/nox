@@ -143,13 +143,13 @@ and infer_fns env fns =
 
 and infer_fn env name params body =
   match Environment.find name env with
-  | Types.Fn (param_types, _) ->
+  | Types.Fn (param_types, return_type) ->
     let env' =
       List.fold_left2
         (fun env param param_type -> Environment.add param param_type env)
         env params param_types
     in
-    let return_type = infer_expr env' body in
+    unify body.span (infer_expr env' body) return_type;
     Types.Fn (param_types, return_type)
   | _ -> raise (TypeError {message = "expect a function"; span = body.span})
 

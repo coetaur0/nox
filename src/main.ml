@@ -1,7 +1,7 @@
 open Nox
 
 let () =
-  let source = Source.make "let x = 42; fn f() {x * 2}; let y = f(); y" in
+  let source = Source.make "fn g() {f()} fn f() {42}; g()" in
   try
     let stmts = Parser.parse source in
     let (_, ty) = Typechecker.infer Environment.empty stmts in
