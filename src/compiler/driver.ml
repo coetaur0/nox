@@ -12,15 +12,15 @@ let rec read_input start =
   else
     String.sub input 0 (length - 2)
 
-let print_syntax_errors diagnostics =
-  print_endline "Encountered syntax errors in the input:";
+let print_syntax_errors source diagnostics =
+  print_endline (Printf.sprintf "Encountered syntax errors in %s:" source);
   List.iter
-    (fun diagnostic -> print_endline (Printf.sprintf "  * %s." (Printer.diagnostic_repr diagnostic)))
+    (fun diagnostic -> print_endline (Printf.sprintf "  * %s" (Printer.diagnostic_repr diagnostic)))
     diagnostics
 
-let print_type_error diagnostic =
-  print_endline "Encountered a type error in the input:";
-  print_endline (Printf.sprintf "  * %s." (Printer.diagnostic_repr diagnostic))
+let print_type_error source diagnostic =
+  print_endline (Printf.sprintf "Encountered a type error in %s:" source);
+  print_endline (Printf.sprintf "  * %s" (Printer.diagnostic_repr diagnostic))
 
 (* ----- REPL functions ------------------------------------------------------------------------- *)
 
@@ -41,8 +41,8 @@ let run_repl () =
     | End_of_file ->
       print_endline "";
       continue := false
-    | Parser.SyntaxError diagnostics -> print_syntax_errors diagnostics
-    | Typechecker.TypeError diagnostic -> print_type_error diagnostic
+    | Parser.SyntaxError diagnostics -> print_syntax_errors "input" diagnostics
+    | Typechecker.TypeError diagnostic -> print_type_error "input" diagnostic
   done
 
 (* ----- Compilation functions ------------------------------------------------------------------ *)
@@ -57,5 +57,5 @@ let compile path =
     Out_channel.close output
   with
   | Sys_error error -> print_endline error
-  | Parser.SyntaxError diagnostics -> print_syntax_errors diagnostics
-  | Typechecker.TypeError diagnostic -> print_type_error diagnostic
+  | Parser.SyntaxError diagnostics -> print_syntax_errors path diagnostics
+  | Typechecker.TypeError diagnostic -> print_type_error path diagnostic
