@@ -35,6 +35,7 @@ let binop_repr op =
   | Ast.Sub -> "-"
   | Ast.Mul -> "*"
   | Ast.Div -> "/"
+  | Ast.Concat -> ".."
 
 let unop_repr op =
   match op with
@@ -69,6 +70,7 @@ and ast_expr_repr expr =
   | Ast.Var x -> x
   | Ast.Number num -> string_of_float num
   | Ast.Boolean bool -> string_of_bool bool
+  | Ast.String string -> Printf.sprintf "\"%s\"" string
   | Ast.Unit -> "()"
   | Ast.Invalid -> "<invalid expression>"
 
@@ -83,6 +85,7 @@ let rec type_repr ty =
   | Types.Var {contents = Free (x, _)} -> x
   | Types.Number -> "number"
   | Types.Boolean -> "boolean"
+  | Types.String -> "string"
   | Types.Unit -> "unit"
 
 (* ----- Runtime values representation functions ------------------------------------------------ *)
@@ -91,6 +94,7 @@ let value_repr = function
   | Values.Closure _ -> "<closure>"
   | Values.Number num -> string_of_float num
   | Values.Boolean bool -> string_of_bool bool
+  | Values.String string -> Printf.sprintf "\"%s\"" string
   | Values.Unit -> "()"
 
 (* ----- IR representation functions ------------------------------------------------------------ *)
@@ -120,4 +124,5 @@ and ir_expr_repr = function
   | Ir.Var x -> x
   | Ir.Number num -> string_of_float num
   | Ir.Boolean bool -> string_of_bool bool
+  | Ir.String string -> Printf.sprintf "\"%s\"" string
   | Ir.Unit -> "()"

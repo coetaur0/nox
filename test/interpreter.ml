@@ -40,7 +40,8 @@ let check_var _ =
 let check_binary_expr _ =
   check "true || false" "true";
   check "10 < 100 == 9 > 3" "true";
-  check "10 + 10" "20."
+  check "10 + 10" "20.";
+  check "\"Hello, \" .. \"World!\"" "\"Hello, World!\""
 
 let check_unary_expr _ =
   check "!!false" "false";
@@ -65,6 +66,8 @@ let check_boolean _ =
   check "true" "true";
   check "false" "false"
 
+let check_string _ = check "\"Some string\"" "\"Some string\""
+
 let check_unit _ = check "()" "()"
 
 (* ----- Tests ---------------------------------------------------------------------------------- *)
@@ -83,6 +86,7 @@ let tests =
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;
+         "String literals" >:: check_string;
          "Unit literals" >:: check_unit ]
 
 let () = run_test_tt_main tests

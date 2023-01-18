@@ -57,7 +57,8 @@ let check_var _ =
 let check_binary_expr _ =
   check "true || false" "boolean";
   check "10 < 100 == 9 > 3" "boolean";
-  check "10 + 10" "number"
+  check "10 + 10" "number";
+  check "\"Hello, \" .. \"World!\"" "string"
 
 let check_invalid_binary_expr _ =
   check_error "10 == false" "1:7..1:12: expect a value of type number, but found a boolean value.";
@@ -99,6 +100,8 @@ let check_boolean _ =
   check "true" "boolean";
   check "false" "boolean"
 
+let check_string _ = check "\"A string value\"" "string"
+
 let check_unit _ = check "()" "unit"
 
 (* ----- Tests ---------------------------------------------------------------------------------- *)
@@ -123,6 +126,7 @@ let tests =
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;
+         "String literals" >:: check_string;
          "Unit literals" >:: check_unit ]
 
 let () = run_test_tt_main tests

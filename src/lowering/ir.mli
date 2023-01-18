@@ -17,4 +17,5 @@ and expr =
   | Var of Ast.name
   | Number of float
   | Boolean of bool
+  | String of string
   | Unit

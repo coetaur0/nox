@@ -94,7 +94,11 @@ let rec unify span lhs rhs =
         raise (TypeError {message = "found recursive types"; span})
       else
         typevar := Bound ty
-    | (Types.Number, Types.Number) | (Types.Boolean, Types.Boolean) | (Types.Unit, Types.Unit) -> ()
+    | (Types.Number, Types.Number)
+     |(Types.Boolean, Types.Boolean)
+     |(Types.Unit, Types.Unit)
+     |(Types.String, Types.String) ->
+      ()
     | _ ->
       raise
         (TypeError
@@ -175,6 +179,7 @@ and infer_expr env node =
       raise (TypeError {message = Printf.sprintf "unknown variable '%s'" x; span = node.span}) )
   | Ast.Number _ -> Types.Number
   | Ast.Boolean _ -> Types.Boolean
+  | Ast.String _ -> Types.String
   | Ast.Unit -> Types.Unit
   | Ast.Invalid ->
     raise (TypeError {message = "cannot type an invalid expression"; span = node.span})
@@ -188,6 +193,7 @@ and infer_binary env op lhs rhs =
     | Ast.Eq | Ast.Ne -> (lhs_type, Types.Boolean)
     | Ast.Le | Ast.Ge | Ast.Lt | Ast.Gt -> (Types.Number, Types.Boolean)
     | Ast.Add | Ast.Sub | Ast.Mul | Ast.Div -> (Types.Number, Types.Number)
+    | Ast.Concat -> (Types.String, Types.String)
   in
   unify Ast.(lhs.span) operand_type lhs_type;
   unify Ast.(rhs.span) operand_type rhs_type;

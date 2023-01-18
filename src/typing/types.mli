@@ -10,6 +10,7 @@ type t =
   | Var of var ref
   | Number
   | Boolean
+  | String
   | Unit
 
 (** A type variable. *)

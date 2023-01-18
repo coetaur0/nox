@@ -32,6 +32,7 @@ and eval_expr env node =
   | Ast.Var x -> Environment.find x env
   | Ast.Number num -> Values.Number num
   | Ast.Boolean bool -> Values.Boolean bool
+  | Ast.String string -> Values.String string
   | Ast.Unit -> Values.Unit
   | Ast.Invalid -> failwith "Unreachable case"
 
@@ -51,6 +52,7 @@ and eval_binary env op lhs rhs =
   | (Ast.Sub, Values.Number n0, Values.Number n1) -> Values.Number (n0 -. n1)
   | (Ast.Mul, Values.Number n0, Values.Number n1) -> Values.Number (n0 *. n1)
   | (Ast.Div, Values.Number n0, Values.Number n1) -> Values.Number (n0 /. n1)
+  | (Ast.Concat, Values.String s0, Values.String s1) -> Values.String (s0 ^ s1)
   | _ -> failwith "Unreachable case"
 
 and eval_unary env op operand =

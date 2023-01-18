@@ -8,4 +8,5 @@ and t =
   | Closure of env ref * Ast.name list * Ast.expr Ast.node
   | Number of float
   | Boolean of bool
+  | String of string
   | Unit

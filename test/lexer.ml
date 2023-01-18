@@ -47,8 +47,12 @@ let check_numbers _ =
 let check_booleans _ =
   check "true false" [(Token.Boolean, "true"); (Token.Boolean, "false"); (Token.Eof, "")]
 
+let check_strings _ =
+  check "\"Some string\" \"Unterminated string!"
+    [(Token.String, "\"Some string\""); (Token.BadString, "\"Unterminated string!")]
+
 let check_operators _ =
-  check "= || && == != <= >= < > + - * / !"
+  check "= || && == != <= >= < > + - * / .. !"
     [ (Token.Assign, "=");
       (Token.Or, "||");
       (Token.And, "&&");
@@ -62,6 +66,7 @@ let check_operators _ =
       (Token.Sub, "-");
       (Token.Mul, "*");
       (Token.Div, "/");
+      (Token.Concat, "..");
       (Token.Not, "!");
       (Token.Eof, "") ]
 
@@ -84,6 +89,7 @@ let tests =
          "Names" >:: check_names;
          "Numbers" >:: check_numbers;
          "Booleans" >:: check_booleans;
+         "Strings" >:: check_strings;
          "Operators" >:: check_operators;
          "Punctuation" >:: check_punctuation ]
 

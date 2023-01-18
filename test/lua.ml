@@ -86,7 +86,8 @@ let check_closure_capture _ =
 
 let check_binary_expr _ =
   check "55 * 3 + 1 - 2" "return (((55. * 3.) + 1.) - 2.)";
-  check "let x = 42; x + 33" "local x0\nx0 = 42.\nreturn (x0 + 33.)"
+  check "let x = 42; x + 33" "local x0\nx0 = 42.\nreturn (x0 + 33.)";
+  check "\"Hello, \" .. \"World!\"" "return (\"Hello, \" .. \"World!\")"
 
 let check_unary_expr _ =
   check "--3" "return --3.";
@@ -122,6 +123,8 @@ let check_boolean _ =
   check "true" "return true";
   check "false" "return false"
 
+let check_string _ = check "\"Some string\"" "return \"Some string\""
+
 let check_unit _ = check "()" "return nil"
 
 (* ----- Tests ---------------------------------------------------------------------------------- *)
@@ -143,6 +146,7 @@ let tests =
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;
+         "String literals" >:: check_string;
          "Unit literal" >:: check_unit ]
 
 let () = run_test_tt_main tests

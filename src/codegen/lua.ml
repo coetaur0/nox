@@ -19,6 +19,7 @@ let emit_binop = function
   | Ast.Sub -> "-"
   | Ast.Mul -> "*"
   | Ast.Div -> "/"
+  | Ast.Concat -> ".."
 
 let emit_unop = function
   | Ast.Not -> "not "
@@ -74,6 +75,7 @@ and emit_expr level = function
   | Ir.Var x -> x
   | Ir.Number num -> string_of_float num
   | Ir.Boolean bool -> string_of_bool bool
+  | Ir.String string -> Printf.sprintf "\"%s\"" string
   | Ir.Unit -> "nil"
 
 let emit stmts = emit_stmts 0 stmts

@@ -22,6 +22,7 @@ type binop =
   | Sub
   | Mul
   | Div
+  | Concat
 
 (** A unary operator. *)
 type unop =
@@ -45,5 +46,6 @@ and expr =
   | Var of name
   | Number of float
   | Boolean of bool
+  | String of string
   | Unit
   | Invalid

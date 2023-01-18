@@ -39,7 +39,8 @@ let check_invalid_var _ =
 
 let check_binary_expr _ =
   check "x - 42 * 3.4 + 10 > 255" "(((x - (42. * 3.4)) + 10.) > 255.)";
-  check "true || false && !b" "(true || (false && !b))"
+  check "true || false && !b" "(true || (false && !b))";
+  check "\"Hello, \" .. \"World!\"" "(\"Hello, \" .. \"World!\")"
 
 let check_invalid_binary_expr _ = check_errors "42 -" ["1:5..1:5: expect an expression."]
 
@@ -86,6 +87,8 @@ let check_boolean_expr _ =
   check "true" "true";
   check "false" "false"
 
+let check_string_expr _ = check "\"Some string!\"" "\"Some string!\""
+
 let check_unit_expr _ = check "()" "()"
 
 (* ----- Tests ---------------------------------------------------------------------------------- *)
@@ -111,6 +114,7 @@ let tests =
          "Variable expressions" >:: check_var_expr;
          "Number expressions" >:: check_number_expr;
          "Boolean expressions" >:: check_boolean_expr;
+         "String expressions" >:: check_string_expr;
          "Unit expression" >:: check_unit_expr ]
 
 let () = run_test_tt_main tests

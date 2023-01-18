@@ -1,8 +1,8 @@
-# Nox :night_with_stars:
+# :night_with_stars: Nox
 
-**Nox** is a small functional, statically typed scripting language that looks and feels like a dynamic one thanks to its powerful *type inference* mechanism.
+**Nox** is a small functional, statically typed scripting language that looks and feels like a dynamic one thanks to powerful *type inference*.
 
-The language can either be used interactively in its own [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop), or be compiled to [Lua](https://www.lua.org/) source code.
+The language can either be used interactively in its own [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop), or compiled to [Lua](https://www.lua.org/) source code.
 
 ## Example
 
@@ -16,6 +16,7 @@ fn fact(n) {
     fact(n - 1) * n
   }
 };
+
 fact(5)
 ```
 

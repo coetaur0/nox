@@ -95,6 +95,7 @@ and lower_expr env node =
   | Ast.Var x -> ([], Ir.Var (Environment.find x env))
   | Ast.Number num -> ([], Ir.Number num)
   | Ast.Boolean bool -> ([], Ir.Boolean bool)
+  | Ast.String string -> ([], Ir.String string)
   | Ast.Unit -> ([], Ir.Unit)
   | Ast.Invalid -> failwith "Unreachable case"
 

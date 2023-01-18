@@ -125,6 +125,7 @@ and parse_binary parser precedence lhs =
     | Token.Sub -> (Ast.Sub, 5)
     | Token.Mul -> (Ast.Mul, 6)
     | Token.Div -> (Ast.Div, 6)
+    | Token.Concat -> (Ast.Concat, 7)
     | _ -> (Ast.Or, 0)
   in
   let (op, next_precedence) = next_op () in
@@ -175,6 +176,7 @@ and parse_primary parser =
   | Token.Name -> parse_var parser
   | Token.Number -> parse_number parser
   | Token.Boolean -> parse_boolean parser
+  | Token.String -> parse_string parser
   | Token.LParen -> parse_paren parser
   | _ ->
     emit_diagnostic parser "expect an expression" parser.token.span;
@@ -230,6 +232,12 @@ and parse_boolean parser =
   let span = (advance parser).span in
   let bool = bool_of_string (Source.read parser.source span) in
   Ast.{value = Boolean bool; span}
+
+and parse_string parser =
+  let span = (advance parser).span in
+  let string = Source.read parser.source span in
+  let value = String.sub string 1 (String.length string - 2) in
+  Ast.{value = String value; span}
 
 and parse_paren parser =
   let start = (advance parser).span in

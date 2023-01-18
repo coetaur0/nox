@@ -4,6 +4,7 @@
 type lexeme =
   | Number
   | Boolean
+  | String
   | Name
   | Fn
   | Let
@@ -22,6 +23,7 @@ type lexeme =
   | Sub
   | Mul
   | Div
+  | Concat
   | Not
   | LParen
   | RParen
@@ -30,6 +32,7 @@ type lexeme =
   | Comma
   | Semicolon
   | Eof
+  | BadString
   | Unknown
 
 (** A lexical token is represented by a lexeme and a span in a source. *)

@@ -84,6 +84,16 @@ let lex_number lexer =
   );
   make_token lexer Token.Number
 
+let lex_string lexer =
+  advance lexer 1;
+  ignore (consume lexer (fun c -> c <> '"'));
+  if peek lexer 0 <> Some '"' then
+    make_token lexer Token.BadString
+  else (
+    advance lexer 1;
+    make_token lexer Token.String
+  )
+
 let lex_symbol lexer =
   let (kind, length) =
     match (peek lexer 0, peek lexer 1) with
@@ -93,6 +103,7 @@ let lex_symbol lexer =
     | (Some '!', Some '=') -> (Token.Ne, 2)
     | (Some '<', Some '=') -> (Token.Le, 2)
     | (Some '>', Some '=') -> (Token.Ge, 2)
+    | (Some '.', Some '.') -> (Token.Concat, 2)
     | (Some '=', _) -> (Token.Assign, 1)
     | (Some '<', _) -> (Token.Lt, 1)
     | (Some '>', _) -> (Token.Gt, 1)
@@ -122,6 +133,7 @@ let rec next lexer =
       next lexer
     ) else
       lex_symbol lexer
+  | Some '"' -> lex_string lexer
   | Some c when is_alpha c -> lex_identifier lexer
   | Some c when is_digit c -> lex_number lexer
   | Some _ -> lex_symbol lexer
