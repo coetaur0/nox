@@ -1,19 +1,19 @@
 (* ----- Intitial runtime environment ----------------------------------------------------------- *)
 
 let init_env =
-  [ ( "print",
-      Values.NativeFn
-        (function
-        | Values.String string :: _ ->
-          print_endline string;
-          Values.Unit
-        | _ -> failwith "Invalid arguments" ) );
-    ( "num2str",
-      NativeFn
-        (function
-        | Values.Number num :: _ -> Values.String (string_of_float num)
-        | _ -> failwith "Invalid arguments" ) ) ]
-  |> List.to_seq |> Environment.of_seq
+  Environment.of_list
+    [ ( "print",
+        Values.NativeFn
+          (function
+          | Values.String string :: _ ->
+            print_endline string;
+            Values.Unit
+          | _ -> failwith "Invalid arguments" ) );
+      ( "num2str",
+        NativeFn
+          (function
+          | Values.Number num :: _ -> Values.String (string_of_float num)
+          | _ -> failwith "Invalid arguments" ) ) ]
 
 (* ----- Interpreter functions ------------------------------------------------------------------ *)
 

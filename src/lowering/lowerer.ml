@@ -2,7 +2,7 @@
 
 type env = string Environment.t
 
-let init_env = [("print", "print"); ("num2str", "tostring")] |> List.to_seq |> Environment.of_seq
+let init_env = Environment.of_list [("print", "print"); ("num2str", "tostring")]
 
 (* ----- Utility functions ---------------------------------------------------------------------- *)
 

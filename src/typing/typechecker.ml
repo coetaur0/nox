@@ -7,9 +7,9 @@ exception TypeError of Diagnostic.t
 type env = Types.t Environment.t
 
 let init_env =
-  [ ("print", Types.Fn ([Types.String], Types.Unit));
-    ("num2str", Types.Fn ([Types.Number], Types.String)) ]
-  |> List.to_seq |> Environment.of_seq
+  Environment.of_list
+    [ ("print", Types.Fn ([Types.String], Types.Unit));
+      ("num2str", Types.Fn ([Types.Number], Types.String)) ]
 
 (* ----- Type variables and generalisation levels ----------------------------------------------- *)
 
