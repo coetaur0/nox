@@ -8,7 +8,7 @@ let check string expected =
   try
     let stmts = Parser.parse source in
     ignore (Typechecker.infer Environment.empty stmts);
-    let ir = Lowerer.lower stmts in
+    let ir = Lowerer.lower Lowerer.init_env stmts in
     let lua = Lua.emit ir in
     assert_equal expected lua
   with

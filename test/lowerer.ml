@@ -8,7 +8,7 @@ let check string expected =
   try
     let stmts = Parser.parse source in
     ignore (Typechecker.infer Environment.empty stmts);
-    let ir = Lowerer.lower stmts in
+    let ir = Lowerer.lower Lowerer.init_env stmts in
     assert_equal expected (Printer.ir_repr ir)
   with
   | Parser.SyntaxError _ -> assert_failure "Expect a valid program"

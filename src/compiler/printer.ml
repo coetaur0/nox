@@ -92,6 +92,7 @@ let rec type_repr ty =
 
 let value_repr = function
   | Values.Closure _ -> "<closure>"
+  | Values.NativeFn _ -> "<native fn>"
   | Values.Number num -> string_of_float num
   | Values.Boolean bool -> string_of_bool bool
   | Values.String string -> Printf.sprintf "\"%s\"" string

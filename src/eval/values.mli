@@ -6,6 +6,7 @@ type env = t Environment.t
 (** A runtime value manipulated by the interpreter. *)
 and t =
   | Closure of env ref * Ast.name list * Ast.expr Ast.node
+  | NativeFn of (t list -> t)
   | Number of float
   | Boolean of bool
   | String of string

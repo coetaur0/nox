@@ -1,3 +1,9 @@
+(* ----- Lowering environment ------------------------------------------------------------------- *)
+
+type env = string Environment.t
+
+let init_env = [("print", "print"); ("num2str", "tostring")] |> List.to_seq |> Environment.of_seq
+
 (* ----- Utility functions ---------------------------------------------------------------------- *)
 
 let current_id = ref 0
@@ -123,6 +129,6 @@ and lower_lambda env params body =
   let (env', params') = mangle_list env params in
   ([], Ir.Lambda (params', return env' body))
 
-let lower stmts =
+let lower env stmts =
   reset_id ();
-  lower_stmts Environment.empty stmts
+  lower_stmts env stmts

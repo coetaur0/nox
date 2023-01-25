@@ -6,6 +6,11 @@ exception TypeError of Diagnostic.t
 
 type env = Types.t Environment.t
 
+let init_env =
+  [ ("print", Types.Fn ([Types.String], Types.Unit));
+    ("num2str", Types.Fn ([Types.Number], Types.String)) ]
+  |> List.to_seq |> Environment.of_seq
+
 (* ----- Type variables and generalisation levels ----------------------------------------------- *)
 
 let previous_id = ref 0

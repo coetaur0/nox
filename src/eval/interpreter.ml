@@ -1,3 +1,20 @@
+(* ----- Intitial runtime environment ----------------------------------------------------------- *)
+
+let init_env =
+  [ ( "print",
+      Values.NativeFn
+        (function
+        | Values.String string :: _ ->
+          print_endline string;
+          Values.Unit
+        | _ -> failwith "Invalid arguments" ) );
+    ( "num2str",
+      NativeFn
+        (function
+        | Values.Number num :: _ -> Values.String (string_of_float num)
+        | _ -> failwith "Invalid arguments" ) ) ]
+  |> List.to_seq |> Environment.of_seq
+
 (* ----- Interpreter functions ------------------------------------------------------------------ *)
 
 let rec eval_stmts env = function
@@ -83,6 +100,7 @@ and eval_app env callee args =
         !closure_env params args
     in
     eval_expr call_env body
+  | Values.NativeFn f -> f (List.map (eval_expr env) args)
   | _ -> failwith "Unreachable case"
 
 let run env stmts = eval_stmts env stmts

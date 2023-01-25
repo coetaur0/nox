@@ -26,8 +26,8 @@ let print_type_error source diagnostic =
 
 let run_repl () =
   print_endline "Welcome to the Nox REPL.";
-  let type_env = ref Environment.empty in
-  let runtime_env = ref Environment.empty in
+  let type_env = ref Typechecker.init_env in
+  let runtime_env = ref Interpreter.init_env in
   let continue = ref true in
   while !continue do
     try
@@ -50,8 +50,8 @@ let run_repl () =
 let compile path =
   try
     let stmts = Source.from_file path |> Parser.parse in
-    ignore (Typechecker.infer Environment.empty stmts);
-    let lua = stmts |> Lowerer.lower |> Lua.emit in
+    ignore (Typechecker.infer Typechecker.init_env stmts);
+    let lua = stmts |> Lowerer.lower Lowerer.init_env |> Lua.emit in
     let output = Out_channel.open_text (Filename.remove_extension path ^ ".lua") in
     Out_channel.output_string output lua;
     Out_channel.close output

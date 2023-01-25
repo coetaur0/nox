@@ -17,7 +17,7 @@ fn fact(n) {
   }
 };
 
-fact(5)
+print("The factorial of 5 is  " .. num2str(fact(5)))
 ```
 
 ## Installation
