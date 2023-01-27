@@ -41,6 +41,8 @@ let unop_repr op =
   match op with
   | Ast.Not -> "!"
   | Ast.Neg -> "-"
+  | Ast.Ref -> "&"
+  | Ast.Deref -> "@"
 
 let rec ast_repr stmts = list_repr stmts ast_stmt_repr "; "
 
@@ -53,6 +55,7 @@ and ast_stmt_repr stmt =
         )
       " "
   | Ast.Let (name, value) -> Printf.sprintf "let %s = %s" name (ast_expr_repr value)
+  | Ast.Update (lhs, rhs) -> Printf.sprintf "%s <- %s" (ast_expr_repr lhs) (ast_expr_repr rhs)
   | Ast.Expr expr -> ast_expr_repr {value = expr; span = stmt.span}
 
 and ast_expr_repr expr =
@@ -83,6 +86,7 @@ let rec type_repr ty =
   | Types.Generic x -> x
   | Types.Var {contents = Bound ty'} -> type_repr ty'
   | Types.Var {contents = Free (x, _)} -> x
+  | Types.Ref ty' -> Printf.sprintf "&%s" (type_repr ty')
   | Types.Number -> "number"
   | Types.Boolean -> "boolean"
   | Types.String -> "string"
@@ -90,9 +94,10 @@ let rec type_repr ty =
 
 (* ----- Runtime values representation functions ------------------------------------------------ *)
 
-let value_repr = function
+let rec value_repr = function
   | Values.Closure _ -> "<closure>"
   | Values.NativeFn _ -> "<native fn>"
+  | Values.Ref value -> Printf.sprintf "&%s" (value_repr !value)
   | Values.Number num -> string_of_float num
   | Values.Boolean bool -> string_of_bool bool
   | Values.String string -> Printf.sprintf "\"%s\"" string

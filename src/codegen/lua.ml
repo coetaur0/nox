@@ -24,6 +24,7 @@ let emit_binop = function
 let emit_unop = function
   | Ast.Not -> "not "
   | Ast.Neg -> "-"
+  | _ -> failwith "TODO: handle reference and dereference expressions"
 
 let rec emit_stmts level stmts = Printer.list_repr stmts (emit_stmt level) "\n"
 

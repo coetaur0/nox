@@ -97,6 +97,7 @@ let lex_string lexer =
 let lex_symbol lexer =
   let (kind, length) =
     match (peek lexer 0, peek lexer 1) with
+    | (Some '<', Some '-') -> (Token.Update, 2)
     | (Some '|', Some '|') -> (Token.Or, 2)
     | (Some '&', Some '&') -> (Token.And, 2)
     | (Some '=', Some '=') -> (Token.Eq, 2)
@@ -112,6 +113,8 @@ let lex_symbol lexer =
     | (Some '*', _) -> (Token.Mul, 1)
     | (Some '/', _) -> (Token.Div, 1)
     | (Some '!', _) -> (Token.Not, 1)
+    | (Some '&', _) -> (Token.Ref, 1)
+    | (Some '@', _) -> (Token.Deref, 1)
     | (Some '(', _) -> (Token.LParen, 1)
     | (Some ')', _) -> (Token.RParen, 1)
     | (Some '{', _) -> (Token.LBrace, 1)

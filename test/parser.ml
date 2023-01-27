@@ -37,6 +37,10 @@ let check_invalid_var _ =
   check_errors "let x 42" ["1:7..1:9: expect a '='."];
   check_errors "let x =" ["1:8..1:8: expect an expression."]
 
+let check_update _ =
+  check "x <- 3" "x <- 3.";
+  check "&y <- @z" "&y <- @z"
+
 let check_binary_expr _ =
   check "x - 42 * 3.4 + 10 > 255" "(((x - (42. * 3.4)) + 10.) > 255.)";
   check "true || false && !b" "(true || (false && !b))";
@@ -46,7 +50,9 @@ let check_invalid_binary_expr _ = check_errors "42 -" ["1:5..1:5: expect an expr
 
 let check_unary_expr _ =
   check "!!true" "!!true";
-  check "---3" "---3."
+  check "---3" "---3.";
+  check "&42" "&42.";
+  check "@&3" "@&3."
 
 let check_invalid_unary_expr _ = check_errors "!" ["1:2..1:2: expect an expression."]
 
@@ -99,6 +105,7 @@ let tests =
          "Invalid functions" >:: check_invalid_fn;
          "Variables" >:: check_var;
          "Invalid variables" >:: check_invalid_var;
+         "Updates" >:: check_update;
          "Binary expressions" >:: check_binary_expr;
          "Invalid binary expressions" >:: check_invalid_binary_expr;
          "Unary expressions" >:: check_unary_expr;

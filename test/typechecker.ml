@@ -27,7 +27,10 @@ let check_error string expected =
 
 let check_polymorphic_fn _ =
   check "fn f(x) {x}; f(true); f(1)" "number";
-  check "fn f(a, b) {if true {a} else {b}}; f" "('a, 'a) -> 'a"
+  check "fn f(a, b) {if true {a} else {b}}; f" "('a, 'a) -> 'a";
+  check "fn mkref(x) { &x }; mkref" "('a) -> &'a";
+  check "fn deref(r) { @r }; deref" "(&'a) -> 'a";
+  check "fn assign(r, x) { r <- x }; assign" "(&'a, 'a) -> unit"
 
 let check_recursive_fn _ =
   check "fn fib(n) {if n == 0 {0} else if n == 1 {1} else {fib(n - 1) + fib(n - 2)}}; fib"
@@ -54,6 +57,12 @@ let check_var _ =
   check "let b = true; b" "boolean";
   check "let u = (); u" "unit"
 
+let check_update _ = check "let ref = &42; ref <- 44" "unit"
+
+let check_invalid_update _ =
+  check_error "let x = 42; x <- 44"
+    "1:13..1:14: expect a value of type &'a, but found a number value."
+
 let check_binary_expr _ =
   check "true || false" "boolean";
   check "10 < 100 == 9 > 3" "boolean";
@@ -66,11 +75,14 @@ let check_invalid_binary_expr _ =
 
 let check_unary_expr _ =
   check "!!true" "boolean";
-  check "--10" "number"
+  check "--10" "number";
+  check "&42" "&number";
+  check "@&true" "boolean"
 
 let check_invalid_unary_expr _ =
   check_error "!10" "1:2..1:4: expect a value of type boolean, but found a number value.";
-  check_error "-false" "1:2..1:7: expect a value of type number, but found a boolean value."
+  check_error "-false" "1:2..1:7: expect a value of type number, but found a boolean value.";
+  check_error "@12" "1:2..1:4: expect a value of type &'a, but found a number value."
 
 let check_if_expr _ =
   check "if true {10} else {-10}" "number";
@@ -115,6 +127,8 @@ let tests =
          "Invalid functions" >:: check_invalid_fn;
          "Generic variables" >:: check_generic_var;
          "Variables" >:: check_var;
+         "Updates" >:: check_update;
+         "Invalid updates" >:: check_invalid_update;
          "Binary expressions" >:: check_binary_expr;
          "Invalid binary expressions" >:: check_invalid_binary_expr;
          "Unary expressions" >:: check_unary_expr;

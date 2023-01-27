@@ -11,6 +11,7 @@ type lexeme =
   | If
   | Else
   | Assign
+  | Update
   | Or
   | And
   | Eq
@@ -25,6 +26,8 @@ type lexeme =
   | Div
   | Concat
   | Not
+  | Ref
+  | Deref
   | LParen
   | RParen
   | LBrace

@@ -52,7 +52,10 @@ let check_if_expr _ =
   check "if 10 > 100 {true} else if -10 > -11 {false} else {true}" "false";
   check "if true {}" "()"
 
-let check_application_expr _ = check "fn f(x, y) {x + y}; f(1, 2)" "3."
+let check_application_expr _ =
+  check "fn f(x, y) {x + y}; f(1, 2)" "3.";
+  check "fn mkref(x) { &x }; mkref(3)" "&3.";
+  check "fn assign(r, x) { r <- x; x }; assign(&42, 43)" "43."
 
 let check_lambda_expr _ =
   check "<x> {x}" "<closure>";

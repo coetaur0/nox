@@ -9,7 +9,8 @@ type env = Types.t Environment.t
 let init_env =
   Environment.of_list
     [ ("print", Types.Fn ([Types.String], Types.Unit));
-      ("num2str", Types.Fn ([Types.Number], Types.String)) ]
+      ("num2str", Types.Fn ([Types.Number], Types.String));
+      ("bool2str", Types.Fn ([Types.Boolean], Types.String)) ]
 
 (* ----- Type variables and generalisation levels ----------------------------------------------- *)
 
@@ -50,6 +51,7 @@ let rec generalise = function
   | Types.Fn (params, return) -> Types.Fn (List.map generalise params, generalise return)
   | Types.Var {contents = Bound ty} -> generalise ty
   | Types.Var {contents = Free (x, level)} when level > !current_level -> Types.Generic x
+  | Types.Ref ty -> Types.Ref (generalise ty)
   | _ as ty -> ty
 
 let instantiate ty =
@@ -63,6 +65,7 @@ let instantiate ty =
         Hashtbl.add generics x var;
         var )
     | Types.Var {contents = Bound ty} -> instantiate' ty
+    | Types.Ref ty -> Types.Ref (instantiate' ty)
     | _ as ty -> ty
   in
   instantiate' ty
@@ -81,6 +84,7 @@ let rec occurs typevar = function
     in
     typevar' := Free (x', min_level);
     false
+  | Types.Ref ty -> occurs typevar ty
   | _ -> false
 
 let rec unify span lhs rhs =
@@ -99,6 +103,7 @@ let rec unify span lhs rhs =
         raise (TypeError {message = "found recursive types"; span})
       else
         typevar := Bound ty
+    | (Types.Ref lhs_ty, Types.Ref rhs_ty) -> unify span lhs_ty rhs_ty
     | (Types.Number, Types.Number)
      |(Types.Boolean, Types.Boolean)
      |(Types.Unit, Types.Unit)
@@ -126,6 +131,7 @@ and infer_stmt env stmt =
   match Ast.(stmt.value) with
   | Ast.Fn fns -> infer_fns env fns
   | Ast.Let (name, value) -> infer_let env name value
+  | Ast.Update (lhs, rhs) -> infer_update env lhs rhs
   | Ast.Expr expr -> (env, infer_expr env Ast.{value = expr; span = stmt.span})
 
 and infer_fns env fns =
@@ -166,7 +172,16 @@ and infer_let env name value =
   enter_level ();
   let ty = infer_expr env value in
   exit_level ();
-  (Environment.add name (generalise ty) env, Types.Unit)
+  match value.value with
+  | Ast.Lambda _ -> (Environment.add name (generalise ty) env, Types.Unit)
+  | _ -> (Environment.add name ty env, Types.Unit)
+
+and infer_update env lhs rhs =
+  let lhs_ty = infer_expr env lhs in
+  let rhs_ty = infer_expr env rhs in
+  unify lhs.span (Types.Ref (new_var !current_level)) lhs_ty;
+  unify rhs.span lhs_ty (Types.Ref rhs_ty);
+  (env, Types.Unit)
 
 and infer_expr env node =
   match Ast.(node.value) with
@@ -206,13 +221,19 @@ and infer_binary env op lhs rhs =
 
 and infer_unary env op operand =
   let operand_type = infer_expr env operand in
-  let expr_type =
-    match op with
-    | Ast.Not -> Types.Boolean
-    | Ast.Neg -> Types.Number
-  in
-  unify Ast.(operand.span) expr_type operand_type;
-  expr_type
+  let span = Ast.(operand.span) in
+  match op with
+  | Ast.Not ->
+    unify span Types.Boolean operand_type;
+    Types.Boolean
+  | Ast.Neg ->
+    unify span Types.Number operand_type;
+    Types.Number
+  | Ast.Ref -> Types.Ref operand_type
+  | Ast.Deref ->
+    let ty = new_var !current_level in
+    unify span (Types.Ref ty) operand_type;
+    ty
 
 and infer_if env cond thn els =
   let cond_type = infer_expr env cond in

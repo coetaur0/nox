@@ -2,7 +2,8 @@
 
 type env = string Environment.t
 
-let init_env = Environment.of_list [("print", "print"); ("num2str", "tostring")]
+let init_env =
+  Environment.of_list [("print", "print"); ("num2str", "tostring"); ("bool2str", "tostring")]
 
 (* ----- Utility functions ---------------------------------------------------------------------- *)
 
@@ -42,6 +43,7 @@ and lower_stmt env node =
   match Ast.(node.value) with
   | Ast.Fn fns -> lower_fns env fns
   | Ast.Let (name, value) -> lower_let env name value
+  | Ast.Update _ -> failwith "TODO: handle update statements"
   | Ast.Expr expr -> (env, assign env "_" Ast.{value = expr; span = node.span})
 
 and lower_fns env fns =

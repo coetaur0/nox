@@ -7,6 +7,7 @@ type env = t Environment.t
 and t =
   | Closure of env ref * Ast.name list * Ast.expr Ast.node
   | NativeFn of (t list -> t)
+  | Ref of t ref
   | Number of float
   | Boolean of bool
   | String of string

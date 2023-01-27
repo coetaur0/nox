@@ -76,8 +76,15 @@ and parse_stmt parser =
   | Token.Fn -> parse_fn parser
   | Token.Let -> parse_let parser
   | _ ->
-    let node = parse_expr parser in
-    Ast.{value = Expr node.value; span = node.span}
+    let lhs = parse_unary parser in
+    if parser.token.kind = Token.Update then (
+      ignore (advance parser);
+      let rhs = parse_expr parser in
+      Ast.{value = Update (lhs, rhs); span = Source.merge lhs.span rhs.span}
+    ) else (
+      let node = parse_binary parser 0 lhs in
+      Ast.{value = Expr node.value; span = node.span}
+    )
 
 and parse_fn parser =
   let start = parser.token.span in
@@ -142,6 +149,8 @@ and parse_unary parser =
     match parser.token.kind with
     | Token.Not -> Some Ast.Not
     | Token.Sub -> Some Ast.Neg
+    | Token.Ref -> Some Ast.Ref
+    | Token.Deref -> Some Ast.Deref
     | _ -> None
   in
   match unop with

@@ -13,6 +13,11 @@ let init_env =
         NativeFn
           (function
           | Values.Number num :: _ -> Values.String (string_of_float num)
+          | _ -> failwith "Invalid arguments" ) );
+      ( "bool2str",
+        NativeFn
+          (function
+          | Values.Boolean bool :: _ -> Values.String (string_of_bool bool)
           | _ -> failwith "Invalid arguments" ) ) ]
 
 (* ----- Interpreter functions ------------------------------------------------------------------ *)
@@ -28,6 +33,7 @@ and eval_stmt env node =
   match Ast.(node.value) with
   | Ast.Fn fns -> eval_fns env fns
   | Ast.Let (name, value) -> (Environment.add name (eval_expr env value) env, Values.Unit)
+  | Ast.Update (lhs, rhs) -> eval_update env lhs rhs
   | Ast.Expr expr -> (env, eval_expr env Ast.{value = expr; span = node.span})
 
 and eval_fns env fns =
@@ -37,6 +43,13 @@ and eval_fns env fns =
       env' := Environment.add name (Values.Closure (env', params, body)) !env' )
     fns;
   (!env', Values.Unit)
+
+and eval_update env lhs rhs =
+  match eval_expr env lhs with
+  | Values.Ref value ->
+    value := eval_expr env rhs;
+    (env, Values.Unit)
+  | _ -> failwith "Cannot assign to a non-reference value"
 
 and eval_expr env node =
   match Ast.(node.value) with
@@ -51,7 +64,7 @@ and eval_expr env node =
   | Ast.Boolean bool -> Values.Boolean bool
   | Ast.String string -> Values.String string
   | Ast.Unit -> Values.Unit
-  | Ast.Invalid -> failwith "Unreachable case"
+  | Ast.Invalid -> failwith "Invalid expression"
 
 and eval_binary env op lhs rhs =
   let left_value = eval_expr env lhs in
@@ -70,14 +83,16 @@ and eval_binary env op lhs rhs =
   | (Ast.Mul, Values.Number n0, Values.Number n1) -> Values.Number (n0 *. n1)
   | (Ast.Div, Values.Number n0, Values.Number n1) -> Values.Number (n0 /. n1)
   | (Ast.Concat, Values.String s0, Values.String s1) -> Values.String (s0 ^ s1)
-  | _ -> failwith "Unreachable case"
+  | _ -> failwith "Invalid operands"
 
 and eval_unary env op operand =
   let operand_value = eval_expr env operand in
   match (op, operand_value) with
   | (Ast.Not, Values.Boolean b) -> Values.Boolean (not b)
   | (Ast.Neg, Values.Number n) -> Values.Number (-.n)
-  | _ -> failwith "Unreachable case"
+  | (Ast.Ref, value) -> Values.Ref (ref value)
+  | (Ast.Deref, Values.Ref r) -> !r
+  | _ -> failwith "Invalid operand"
 
 and eval_block env stmts =
   let (_, value) = eval_stmts env stmts in
@@ -88,7 +103,7 @@ and eval_if env cond thn els =
   match cond_value with
   | Values.Boolean true -> eval_expr env thn
   | Values.Boolean false -> eval_expr env els
-  | _ -> failwith "Unreachable case"
+  | _ -> failwith "Invalid condition"
 
 and eval_app env callee args =
   let callee_value = eval_expr env callee in
@@ -101,6 +116,6 @@ and eval_app env callee args =
     in
     eval_expr call_env body
   | Values.NativeFn f -> f (List.map (eval_expr env) args)
-  | _ -> failwith "Unreachable case"
+  | _ -> failwith "Invalid callee"
 
 let run env stmts = eval_stmts env stmts

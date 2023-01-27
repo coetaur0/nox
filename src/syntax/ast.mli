@@ -28,11 +28,14 @@ type binop =
 type unop =
   | Not
   | Neg
+  | Ref
+  | Deref
 
 (** An AST statement. *)
 type stmt =
   | Fn of (name * name list * expr node) list
   | Let of name * expr node
+  | Update of expr node * expr node
   | Expr of expr
 
 (** An AST expression. *)

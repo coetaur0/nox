@@ -52,8 +52,9 @@ let check_strings _ =
     [(Token.String, "\"Some string\""); (Token.BadString, "\"Unterminated string!")]
 
 let check_operators _ =
-  check "= || && == != <= >= < > + - * / .. !"
+  check "= <- || && == != <= >= < > + - * / .. ! & @"
     [ (Token.Assign, "=");
+      (Token.Update, "<-");
       (Token.Or, "||");
       (Token.And, "&&");
       (Token.Eq, "==");
@@ -68,6 +69,8 @@ let check_operators _ =
       (Token.Div, "/");
       (Token.Concat, "..");
       (Token.Not, "!");
+      (Token.Ref, "&");
+      (Token.Deref, "@");
       (Token.Eof, "") ]
 
 let check_punctuation _ =

@@ -8,6 +8,7 @@ type t =
   | Fn of t list * t
   | Generic of name
   | Var of var ref
+  | Ref of t
   | Number
   | Boolean
   | String
