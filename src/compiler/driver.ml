@@ -8,7 +8,7 @@ let rec read_input start =
   let input = Stdlib.read_line () in
   let length = String.length input in
   if length < 2 || String.sub input (length - 2) 2 <> ";;" then
-    input ^ read_input false
+    input ^ "\n" ^ read_input false
   else
     String.sub input 0 (length - 2)
 
