@@ -21,19 +21,14 @@ let emit_binop = function
   | Ast.Div -> "/"
   | Ast.Concat -> ".."
 
-let emit_unop = function
-  | Ast.Not -> "not "
-  | Ast.Neg -> "-"
-  | _ -> failwith "TODO: handle reference and dereference expressions"
-
 let rec emit_stmts level stmts = Printer.list_repr stmts (emit_stmt level) "\n"
 
 and emit_stmt level stmt =
   match stmt with
   | Ir.Fn fns -> emit_fns level fns
   | Ir.Decl name -> Printf.sprintf "%slocal %s" (indent level) name
-  | Ir.Assign (name, value) ->
-    Printf.sprintf "%s%s = %s" (indent level) name (emit_expr level value)
+  | Ir.Assign (lhs, rhs) ->
+    Printf.sprintf "%s%s = %s" (indent level) (emit_expr level lhs) (emit_expr level rhs)
   | Ir.If (cond, thn, els) -> emit_if level cond thn els
   | Ir.Return value -> Printf.sprintf "%sreturn %s" (indent level) (emit_expr level value)
 
@@ -65,7 +60,7 @@ and emit_if level cond thn els =
 and emit_expr level = function
   | Ir.Binary (op, lhs, rhs) ->
     Printf.sprintf "(%s %s %s)" (emit_expr level lhs) (emit_binop op) (emit_expr level rhs)
-  | Ir.Unary (op, operand) -> Printf.sprintf "%s%s" (emit_unop op) (emit_expr level operand)
+  | Ir.Unary (op, operand) -> emit_unary level op operand
   | Ir.App (callee, args) ->
     Printf.sprintf "%s(%s)" (emit_expr level callee) (Printer.list_repr args (emit_expr level) ", ")
   | Ir.Lambda (params, body) ->
@@ -78,5 +73,15 @@ and emit_expr level = function
   | Ir.Boolean bool -> string_of_bool bool
   | Ir.String string -> Printf.sprintf "\"%s\"" string
   | Ir.Unit -> "nil"
+
+and emit_unary level op operand =
+  let (prefix, postfix) =
+    match op with
+    | Ast.Not -> ("not ", "")
+    | Ast.Neg -> ("-", "")
+    | Ast.Ref -> ("({", "})")
+    | Ast.Deref -> ("", "[1]")
+  in
+  Printf.sprintf "%s%s%s" prefix (emit_expr level operand) postfix
 
 let emit stmts = emit_stmts 0 stmts

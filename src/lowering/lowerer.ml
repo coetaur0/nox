@@ -43,8 +43,8 @@ and lower_stmt env node =
   match Ast.(node.value) with
   | Ast.Fn fns -> lower_fns env fns
   | Ast.Let (name, value) -> lower_let env name value
-  | Ast.Update _ -> failwith "TODO: handle update statements"
-  | Ast.Expr expr -> (env, assign env "_" Ast.{value = expr; span = node.span})
+  | Ast.Update (lhs, rhs) -> lower_update env lhs rhs
+  | Ast.Expr expr -> (env, assign env (Ir.Var "_") Ast.{value = expr; span = node.span})
 
 and lower_fns env fns =
   let env' =
@@ -69,26 +69,31 @@ and return env node =
 
 and lower_let env name value =
   let (env', name') = mangle env name in
-  (env', [Ir.Decl name'] @ assign env' name' value)
+  (env', [Ir.Decl name'] @ assign env' (Ir.Var name') value)
 
-and assign env name node =
-  let rec assign_stmts env name = function
+and assign env lhs rhs =
+  let rec assign_stmts env lhs = function
     | [Ast.{value = Expr expr; span}] ->
-      let (ir_stmts, ir_expr) = lower_expr env Ast.{value = expr; span} in
-      ir_stmts @ [Ir.Assign (name, ir_expr)]
+      let (rhs_stmts, rhs_expr) = lower_expr env Ast.{value = expr; span} in
+      rhs_stmts @ [Ir.Assign (lhs, rhs_expr)]
     | stmt :: rest ->
       let (env', ir_stmts) = lower_stmt env stmt in
-      ir_stmts @ assign_stmts env' name rest
-    | [] -> [Ir.Assign (name, Ir.Unit)]
+      ir_stmts @ assign_stmts env' lhs rest
+    | [] -> [Ir.Assign (lhs, Ir.Unit)]
   in
-  match Ast.(node.value) with
-  | Ast.Block stmts -> assign_stmts env name stmts
+  match Ast.(rhs.value) with
+  | Ast.Block stmts -> assign_stmts env lhs stmts
   | Ast.If (cond, thn, els) ->
-    let (ir_stmts, ir_expr) = lower_expr env cond in
-    ir_stmts @ [Ir.If (ir_expr, assign env name thn, assign env name els)]
+    let (cond_stmts, cond_expr) = lower_expr env cond in
+    cond_stmts @ [Ir.If (cond_expr, assign env lhs thn, assign env lhs els)]
   | _ ->
-    let (ir_stmts, ir_expr) = lower_expr env node in
-    ir_stmts @ [Ir.Assign (name, ir_expr)]
+    let (rhs_stmts, rhs_expr) = lower_expr env rhs in
+    rhs_stmts @ [Ir.Assign (lhs, rhs_expr)]
+
+and lower_update env lhs rhs =
+  let (lhs_stmts, lhs_expr) = lower_expr env lhs in
+  let (rhs_stmts, rhs_expr) = lower_expr env rhs in
+  (env, lhs_stmts @ rhs_stmts @ [Ir.Assign (Ir.Unary (Ast.Deref, lhs_expr), rhs_expr)])
 
 and lower_expr env node =
   match Ast.(node.value) with
@@ -96,7 +101,7 @@ and lower_expr env node =
   | Ast.Unary (op, operand) -> lower_unary env op operand
   | Ast.Block _ | Ast.If _ ->
     let tmp = gensym "tmp" in
-    let ir_stmts = assign env tmp node in
+    let ir_stmts = assign env (Ir.Var tmp) node in
     ([Ir.Decl tmp] @ ir_stmts, Ir.Var tmp)
   | Ast.App (callee, args) -> lower_app env callee args
   | Ast.Lambda (params, body) -> lower_lambda env params body

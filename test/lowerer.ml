@@ -41,6 +41,9 @@ let check_var _ =
   check "let x = 42; x" "let x0; x0 = 42.; return x0";
   check "let f = <x> {x + 1}; f(1)" "let f0; f0 = <x1> {return (x1 + 1.)}; return f0(1.)"
 
+let check_update _ =
+  check "let x = &42; x <- @x + 1" "let x0; x0 = &42.; @x0 = (@x0 + 1.); return ()"
+
 let check_binary_expr _ =
   check "55 * 3 + 1 - 2" "return (((55. * 3.) + 1.) - 2.)";
   check "let x = 42; x + 33" "let x0; x0 = 42.; return (x0 + 33.)";
@@ -48,7 +51,8 @@ let check_binary_expr _ =
 
 let check_unary_expr _ =
   check "--3" "return --3.";
-  check "!true" "return !true"
+  check "!true" "return !true";
+  check "@&42" "return @&42."
 
 let check_block_expr _ =
   check "{let x = 1; if x < 1 {true} else {false}}"
@@ -83,6 +87,7 @@ let tests =
          "Mutually recursive functions" >:: check_mutually_recursive_fn;
          "Empty functions" >:: check_empty_fn;
          "Variables" >:: check_var;
+         "Updates" >:: check_update;
          "Binary expressions" >:: check_binary_expr;
          "Unary expressions" >:: check_unary_expr;
          "Block expressions" >:: check_block_expr;

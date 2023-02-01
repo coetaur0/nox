@@ -114,7 +114,7 @@ and ir_stmt_repr = function
         Printf.sprintf "fn %s(%s) {%s}" name (list_repr params (fun p -> p) ", ") (ir_repr body) )
       " "
   | Ir.Decl name -> Printf.sprintf "let %s" name
-  | Ir.Assign (name, value) -> Printf.sprintf "%s = %s" name (ir_expr_repr value)
+  | Ir.Assign (lhs, rhs) -> Printf.sprintf "%s = %s" (ir_expr_repr lhs) (ir_expr_repr rhs)
   | Ir.If (cond, thn, els) ->
     Printf.sprintf "if %s {%s} else {%s}" (ir_expr_repr cond) (ir_repr thn) (ir_repr els)
   | Ir.Return value -> Printf.sprintf "return %s" (ir_expr_repr value)

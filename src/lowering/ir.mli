@@ -4,7 +4,7 @@
 type stmt =
   | Fn of (Ast.name * Ast.name list * stmt list) list
   | Decl of Ast.name
-  | Assign of Ast.name * expr
+  | Assign of expr * expr
   | If of expr * stmt list * stmt list
   | Return of expr
 
