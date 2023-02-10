@@ -8,9 +8,9 @@ type env = Types.t Environment.t
 
 let init_env =
   Environment.of_list
-    [ ("print", Types.Fn ([Types.String], Types.Unit));
-      ("num2str", Types.Fn ([Types.Number], Types.String));
-      ("bool2str", Types.Fn ([Types.Boolean], Types.String)) ]
+    [ ("print", Types.Fun ([Types.String], Types.Unit));
+      ("num2str", Types.Fun ([Types.Number], Types.String));
+      ("bool2str", Types.Fun ([Types.Boolean], Types.String)) ]
 
 (* ----- Type variables and generalisation levels ----------------------------------------------- *)
 
@@ -48,7 +48,7 @@ let new_var level = Types.Var (ref (Types.Free (gensym (), level)))
 (* ----- Generalisation and instantiation functions --------------------------------------------- *)
 
 let rec generalise = function
-  | Types.Fn (params, return) -> Types.Fn (List.map generalise params, generalise return)
+  | Types.Fun (params, return) -> Types.Fun (List.map generalise params, generalise return)
   | Types.Var {contents = Bound ty} -> generalise ty
   | Types.Var {contents = Free (x, level)} when level > !current_level -> Types.Generic x
   | Types.Ref ty -> Types.Ref (generalise ty)
@@ -57,7 +57,7 @@ let rec generalise = function
 let instantiate ty =
   let generics = Hashtbl.create 10 in
   let rec instantiate' = function
-    | Types.Fn (params, return) -> Types.Fn (List.map instantiate' params, instantiate' return)
+    | Types.Fun (params, return) -> Types.Fun (List.map instantiate' params, instantiate' return)
     | Types.Generic x -> (
       try Hashtbl.find generics x
       with Not_found ->
@@ -73,7 +73,7 @@ let instantiate ty =
 (* ----- Unification functions ------------------------------------------------------------------ *)
 
 let rec occurs typevar = function
-  | Types.Fn (params, return) -> List.exists (occurs typevar) params || occurs typevar return
+  | Types.Fun (params, return) -> List.exists (occurs typevar) params || occurs typevar return
   | Types.Var {contents = Bound ty} -> occurs typevar ty
   | Types.Var typevar' when typevar == typevar' -> true
   | Types.Var ({contents = Free (x', level')} as typevar') ->
@@ -92,7 +92,7 @@ let rec unify span lhs rhs =
     ()
   else (
     match (lhs, rhs) with
-    | (Types.Fn (lhs_params, lhs_return), Types.Fn (rhs_params, rhs_return)) ->
+    | (Types.Fun (lhs_params, lhs_return), Types.Fun (rhs_params, rhs_return)) ->
       List.iter2 (unify span) lhs_params rhs_params;
       unify span lhs_return rhs_return
     | (Types.Var {contents = Bound lhs'}, rhs') | (lhs', Types.Var {contents = Bound rhs'}) ->
@@ -129,43 +129,43 @@ let rec infer_stmts env = function
 
 and infer_stmt env stmt =
   match Ast.(stmt.value) with
-  | Ast.Fn fns -> infer_fns env fns
+  | Ast.Fun funs -> infer_funs env funs
   | Ast.Let (name, value) -> infer_let env name value
   | Ast.Update (lhs, rhs) -> infer_update env lhs rhs
   | Ast.Expr expr -> (env, infer_expr env Ast.{value = expr; span = stmt.span})
 
-and infer_fns env fns =
+and infer_funs env funs =
   enter_level ();
   let env' =
     List.fold_left
       (fun env' (name, params, _) ->
         let param_types = List.map (fun _ -> new_var !current_level) params in
-        let ty = Types.Fn (param_types, new_var !current_level) in
+        let ty = Types.Fun (param_types, new_var !current_level) in
         Environment.add name ty env' )
-      env fns
+      env funs
   in
   let types =
     List.fold_right
-      (fun (name, params, body) types -> infer_fn env' name params body :: types)
-      fns []
+      (fun (name, params, body) types -> infer_fun env' name params body :: types)
+      funs []
   in
   exit_level ();
   let types' = List.map generalise types in
   let env'' =
-    List.fold_left2 (fun env (name, _, _) ty -> Environment.add name ty env) env fns types'
+    List.fold_left2 (fun env (name, _, _) ty -> Environment.add name ty env) env funs types'
   in
   (env'', Types.Unit)
 
-and infer_fn env name params body =
+and infer_fun env name params body =
   match Environment.find name env with
-  | Types.Fn (param_types, return_type) ->
+  | Types.Fun (param_types, return_type) ->
     let env' =
       List.fold_left2
         (fun env param param_type -> Environment.add param param_type env)
         env params param_types
     in
     unify body.span (infer_expr env' body) return_type;
-    Types.Fn (param_types, return_type)
+    Types.Fun (param_types, return_type)
   | _ -> raise (TypeError {message = "expect a function"; span = body.span})
 
 and infer_let env name value =
@@ -247,7 +247,7 @@ and infer_app env callee args =
   let callee_type = infer_expr env callee in
   let n_args = List.length args in
   let rec match_args = function
-    | Types.Fn (params, return) ->
+    | Types.Fun (params, return) ->
       let n_params = List.length params in
       if n_args <> n_params then
         raise
@@ -260,7 +260,7 @@ and infer_app env callee args =
     | Types.Var ({contents = Free (_, level)} as typevar) ->
       let params = List.map (fun _ -> new_var level) (List.init n_args (fun _ -> ())) in
       let return = new_var level in
-      typevar := Types.Bound (Types.Fn (params, return));
+      typevar := Types.Bound (Types.Fun (params, return));
       (params, return)
     | _ -> raise (TypeError {message = "expect a function"; span = callee.span})
   in
@@ -278,7 +278,7 @@ and infer_lambda env params body =
       env params param_types
   in
   let return_type = infer_expr env' body in
-  Types.Fn (param_types, return_type)
+  Types.Fun (param_types, return_type)
 
 let infer env stmts =
   reset_level ();

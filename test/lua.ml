@@ -18,11 +18,11 @@ let check string expected =
 (* ----- Test functions ------------------------------------------------------------------------- *)
 
 let check_polymorphic_fn _ =
-  check "fn f(x) {x}; f(true); f(1)"
+  check "fun f(x) {x}; f(true); f(1)"
     "local f0\nf0 = function(x1)\n  return x1\nend\n_ = f0(true)\nreturn f0(1.)"
 
 let check_recursive_fn _ =
-  check "fn fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact(5)"
+  check "fun fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact(5)"
     "local fact0\n\
      fact0 = function(n1)\n\
     \  if (n1 <= 0.) then\n\
@@ -35,7 +35,7 @@ let check_recursive_fn _ =
 
 let check_mutually_recursive_fn _ =
   check
-    "fn even(n) {if n == 0 {true} else {odd(n - 1)}} fn odd(n) {if n == 0 {false} else {even(n - \
+    "fun even(n) {if n == 0 {true} else {odd(n - 1)}} fun odd(n) {if n == 0 {false} else {even(n - \
      1)}}; even(12)"
     "local even0\n\
      local odd1\n\
@@ -56,7 +56,7 @@ let check_mutually_recursive_fn _ =
      return even0(12.)"
 
 let check_nested_fn _ =
-  check "fn f(x) {fn g(x) {x + 1}; g(x)}; f(3)"
+  check "fun f(x) {fun g(x) {x + 1}; g(x)}; f(3)"
     "local f0\n\
      f0 = function(x1)\n\
     \  local g2\n\
@@ -68,12 +68,12 @@ let check_nested_fn _ =
      return f0(3.)"
 
 let check_empty_fn _ =
-  check "fn f() {}; f()" "local f0\nf0 = function()\n  return nil\nend\nreturn f0()"
+  check "fun f() {}; f()" "local f0\nf0 = function()\n  return nil\nend\nreturn f0()"
 
 let check_var _ = check "let x = 42; x" "local x0\nx0 = 42.\nreturn x0"
 
 let check_closure_capture _ =
-  check "let x = 42; fn f() {x * 2}; let y = f(); y"
+  check "let x = 42; fun f() {x * 2}; let y = f(); y"
     "local x0\n\
      x0 = 42.\n\
      local f1\n\
@@ -116,7 +116,7 @@ let check_if_expr _ =
      end"
 
 let check_application_expr _ =
-  check "fn f(x) {x + 1}; f(2)"
+  check "fun f(x) {x + 1}; f(2)"
     "local f0\nf0 = function(x1)\n  return (x1 + 1.)\nend\nreturn f0(2.)"
 
 let check_lambda_expr _ = check "<x, y> {x + y}" "return function(x0, y1)\n  return (x0 + y1)\nend"

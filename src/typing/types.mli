@@ -5,7 +5,7 @@ type name = string
 
 (** A type. *)
 type t =
-  | Fn of t list * t
+  | Fun of t list * t
   | Generic of name
   | Var of var ref
   | Ref of t

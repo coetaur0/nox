@@ -17,20 +17,20 @@ let check string expected =
 (* ----- Test functions ------------------------------------------------------------------------- *)
 
 let check_polymorphic_fn _ =
-  check "fn f(x) {x}; f(true); f(1)" "1.";
-  check "fn f(a, b) {if true {a} else {b}}; f" "<closure>"
+  check "fun f(x) {x}; f(true); f(1)" "1.";
+  check "fun f(a, b) {if true {a} else {b}}; f" "<closure>"
 
 let check_recursive_fn _ =
-  check "fn fib(n) {if n == 0 {0} else if n == 1 {1} else {fib(n - 1) + fib(n - 2)}}; fib(5)" "5.";
-  check "fn fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact(5)" "120."
+  check "fun fib(n) {if n == 0 {0} else if n == 1 {1} else {fib(n - 1) + fib(n - 2)}}; fib(5)" "5.";
+  check "fun fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact(5)" "120."
 
 let check_mutually_recursive_fn _ =
   check
-    "fn even(n) {if n == 0 {true} else {odd(n - 1)}} fn odd(n) {if n == 0 {false} else {even(n - \
+    "fun even(n) {if n == 0 {true} else {odd(n - 1)}} fun odd(n) {if n == 0 {false} else {even(n - \
      1)}}; even(12)"
     "true"
 
-let check_empty_fn _ = check "fn f() {}; f()" "()"
+let check_empty_fn _ = check "fun f() {}; f()" "()"
 
 let check_var _ =
   check "let x = 10; x" "10.";
@@ -53,9 +53,9 @@ let check_if_expr _ =
   check "if true {}" "()"
 
 let check_application_expr _ =
-  check "fn f(x, y) {x + y}; f(1, 2)" "3.";
-  check "fn mkref(x) { &x }; mkref(3)" "&3.";
-  check "fn assign(r, x) { r <- x; x }; assign(&42, 43)" "43."
+  check "fun f(x, y) {x + y}; f(1, 2)" "3.";
+  check "fun mkref(x) { &x }; mkref(3)" "&3.";
+  check "fun assign(r, x) { r <- x; x }; assign(&42, 43)" "43."
 
 let check_lambda_expr _ =
   check "<x> {x}" "<closure>";

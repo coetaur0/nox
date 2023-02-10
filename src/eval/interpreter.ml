@@ -3,19 +3,19 @@
 let init_env =
   Environment.of_list
     [ ( "print",
-        Values.NativeFn
+        Values.NativeFun
           (function
           | Values.String string :: _ ->
             print_endline string;
             Values.Unit
           | _ -> failwith "Invalid arguments" ) );
       ( "num2str",
-        NativeFn
+        NativeFun
           (function
           | Values.Number num :: _ -> Values.String (string_of_float num)
           | _ -> failwith "Invalid arguments" ) );
       ( "bool2str",
-        NativeFn
+        NativeFun
           (function
           | Values.Boolean bool :: _ -> Values.String (string_of_bool bool)
           | _ -> failwith "Invalid arguments" ) ) ]
@@ -31,17 +31,17 @@ let rec eval_stmts env = function
 
 and eval_stmt env node =
   match Ast.(node.value) with
-  | Ast.Fn fns -> eval_fns env fns
+  | Ast.Fun funs -> eval_funs env funs
   | Ast.Let (name, value) -> (Environment.add name (eval_expr env value) env, Values.Unit)
   | Ast.Update (lhs, rhs) -> eval_update env lhs rhs
   | Ast.Expr expr -> (env, eval_expr env Ast.{value = expr; span = node.span})
 
-and eval_fns env fns =
+and eval_funs env funs =
   let env' = ref env in
   List.iter
     (fun (name, params, body) ->
       env' := Environment.add name (Values.Closure (env', params, body)) !env' )
-    fns;
+    funs;
   (!env', Values.Unit)
 
 and eval_update env lhs rhs =
@@ -115,7 +115,7 @@ and eval_app env callee args =
         !closure_env params args
     in
     eval_expr call_env body
-  | Values.NativeFn f -> f (List.map (eval_expr env) args)
+  | Values.NativeFun f -> f (List.map (eval_expr env) args)
   | _ -> failwith "Invalid callee"
 
 let run env stmts = eval_stmts env stmts

@@ -17,25 +17,25 @@ let check string expected =
 (* ----- Test functions ------------------------------------------------------------------------- *)
 
 let check_polymorphic_fn _ =
-  check "fn f(x) {x}; f(true); f(1)" "fn f0(x1) {return x1}; _ = f0(true); return f0(1.)";
-  check "fn f(a, b) {if true {a} else {b}}; f"
-    "fn f0(a1, b2) {if true {return a1} else {return b2}}; return f0"
+  check "fun f(x) {x}; f(true); f(1)" "fun f0(x1) {return x1}; _ = f0(true); return f0(1.)";
+  check "fun f(a, b) {if true {a} else {b}}; f"
+    "fun f0(a1, b2) {if true {return a1} else {return b2}}; return f0"
 
 let check_recursive_fn _ =
-  check "fn fib(n) {if n <= 1 {1} else {fib(n - 1) + fib(n - 2)}}; fib"
-    "fn fib0(n1) {if (n1 <= 1.) {return 1.} else {return (fib0((n1 - 1.)) + fib0((n1 - 2.)))}}; \
+  check "fun fib(n) {if n <= 1 {1} else {fib(n - 1) + fib(n - 2)}}; fib"
+    "fun fib0(n1) {if (n1 <= 1.) {return 1.} else {return (fib0((n1 - 1.)) + fib0((n1 - 2.)))}}; \
      return fib0";
-  check "fn fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact"
-    "fn fact0(n1) {if (n1 <= 0.) {return 1.} else {return (fact0((n1 - 1.)) * n1)}}; return fact0"
+  check "fun fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact"
+    "fun fact0(n1) {if (n1 <= 0.) {return 1.} else {return (fact0((n1 - 1.)) * n1)}}; return fact0"
 
 let check_mutually_recursive_fn _ =
   check
-    "fn even(n) {if n == 0 {true} else {odd(n - 1)}} fn odd(n) {if n == 0 {false} else {even(n - \
+    "fun even(n) {if n == 0 {true} else {odd(n - 1)}} fun odd(n) {if n == 0 {false} else {even(n - \
      1)}}; even"
-    "fn even0(n2) {if (n2 == 0.) {return true} else {return odd1((n2 - 1.))}} fn odd1(n3) {if (n3 \
-     == 0.) {return false} else {return even0((n3 - 1.))}}; return even0"
+    "fun even0(n2) {if (n2 == 0.) {return true} else {return odd1((n2 - 1.))}} fun odd1(n3) {if \
+     (n3 == 0.) {return false} else {return even0((n3 - 1.))}}; return even0"
 
-let check_empty_fn _ = check "fn f() {}; f" "fn f0() {return ()}; return f0"
+let check_empty_fn _ = check "fun f() {}; f" "fun f0() {return ()}; return f0"
 
 let check_var _ =
   check "let x = 42; x" "let x0; x0 = 42.; return x0";
@@ -63,7 +63,7 @@ let check_if_expr _ =
     "let n0; n0 = 1.; if (n0 < 1.) {return -1.} else {if (n0 == 1.) {return 0.} else {return 1.}}"
 
 let check_application_expr _ =
-  check "fn f(x) {x + 1}; f(2)" "fn f0(x1) {return (x1 + 1.)}; return f0(2.)";
+  check "fun f(x) {x + 1}; f(2)" "fun f0(x1) {return (x1 + 1.)}; return f0(2.)";
   check "<x> {x * 2}(3)" "return <x0> {return (x0 * 2.)}(3.)"
 
 let check_lambda_expr _ = check "<x, y> {x + y}" "return <x0, y1> {return (x0 + y1)}"

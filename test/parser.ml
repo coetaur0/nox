@@ -21,12 +21,13 @@ let check_errors string expected =
 (* ----- Test functions ------------------------------------------------------------------------- *)
 
 let check_fn _ =
-  check "fn f(x, y, b) {if b {x + y} else {x - y}}" "fn f(x, y, b) {if b {(x + y)} else {(x - y)}}";
-  check "fn t() {true}" "fn t() {true}"
+  check "fun f(x, y, b) {if b {x + y} else {x - y}}"
+    "fun f(x, y, b) {if b {(x + y)} else {(x - y)}}";
+  check "fun t() {true}" "fun t() {true}"
 
 let check_invalid_fn _ =
-  check_errors "fn f x) {x}" ["1:6..1:7: expect a '('."];
-  check_errors "fn f(x {x}" ["1:8..1:9: expect a ')'."]
+  check_errors "fun f x) {x}" ["1:7..1:8: expect a '('."];
+  check_errors "fun f(x {x}" ["1:9..1:10: expect a ')'."]
 
 let check_var _ =
   check "let x = 42" "let x = 42.";

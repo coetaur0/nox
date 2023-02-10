@@ -48,11 +48,12 @@ let rec ast_repr stmts = list_repr stmts ast_stmt_repr "; "
 
 and ast_stmt_repr stmt =
   match Ast.(stmt.value) with
-  | Ast.Fn fns ->
-    list_repr fns
+  | Ast.Fun funs ->
+    list_repr funs
       (fun (name, params, body) ->
-        Printf.sprintf "fn %s(%s) %s" name (list_repr params (fun p -> p) ", ") (ast_expr_repr body)
-        )
+        Printf.sprintf "fun %s(%s) %s" name
+          (list_repr params (fun p -> p) ", ")
+          (ast_expr_repr body) )
       " "
   | Ast.Let (name, value) -> Printf.sprintf "let %s = %s" name (ast_expr_repr value)
   | Ast.Update (lhs, rhs) -> Printf.sprintf "%s <- %s" (ast_expr_repr lhs) (ast_expr_repr rhs)
@@ -81,7 +82,7 @@ and ast_expr_repr expr =
 
 let rec type_repr ty =
   match ty with
-  | Types.Fn (params, return) ->
+  | Types.Fun (params, return) ->
     Printf.sprintf "(%s) -> %s" (list_repr params type_repr ", ") (type_repr return)
   | Types.Generic x -> x
   | Types.Var {contents = Bound ty'} -> type_repr ty'
@@ -96,7 +97,7 @@ let rec type_repr ty =
 
 let rec value_repr = function
   | Values.Closure _ -> "<closure>"
-  | Values.NativeFn _ -> "<native fn>"
+  | Values.NativeFun _ -> "<native fun>"
   | Values.Ref value -> Printf.sprintf "&%s" (value_repr !value)
   | Values.Number num -> string_of_float num
   | Values.Boolean bool -> string_of_bool bool
@@ -108,10 +109,10 @@ let rec value_repr = function
 let rec ir_repr stmts = list_repr stmts ir_stmt_repr "; "
 
 and ir_stmt_repr = function
-  | Ir.Fn fns ->
-    list_repr fns
+  | Ir.Fun funs ->
+    list_repr funs
       (fun (name, params, body) ->
-        Printf.sprintf "fn %s(%s) {%s}" name (list_repr params (fun p -> p) ", ") (ir_repr body) )
+        Printf.sprintf "fun %s(%s) {%s}" name (list_repr params (fun p -> p) ", ") (ir_repr body) )
       " "
   | Ir.Decl name -> Printf.sprintf "let %s" name
   | Ir.Assign (lhs, rhs) -> Printf.sprintf "%s = %s" (ir_expr_repr lhs) (ir_expr_repr rhs)

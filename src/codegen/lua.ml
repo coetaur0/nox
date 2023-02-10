@@ -25,26 +25,26 @@ let rec emit_stmts level stmts = Printer.list_repr stmts (emit_stmt level) "\n"
 
 and emit_stmt level stmt =
   match stmt with
-  | Ir.Fn fns -> emit_fns level fns
+  | Ir.Fun funs -> emit_funs level funs
   | Ir.Decl name -> Printf.sprintf "%slocal %s" (indent level) name
   | Ir.Assign (lhs, rhs) ->
     Printf.sprintf "%s%s = %s" (indent level) (emit_expr level lhs) (emit_expr level rhs)
   | Ir.If (cond, thn, els) -> emit_if level cond thn els
   | Ir.Return value -> Printf.sprintf "%sreturn %s" (indent level) (emit_expr level value)
 
-and emit_fns level fns =
+and emit_funs level funs =
   let (decls, defs) =
     List.fold_right
       (fun (name, params, body) (decls, defs) ->
         ( Printf.sprintf "%slocal %s" (indent level) name :: decls,
-          emit_fn level name params body :: defs ) )
-      fns ([], [])
+          emit_fun level name params body :: defs ) )
+      funs ([], [])
   in
   Printf.sprintf "%s\n%s"
     (Printer.list_repr decls (fun d -> d) "\n")
     (Printer.list_repr defs (fun d -> d) "\n")
 
-and emit_fn level name params body =
+and emit_fun level name params body =
   Printf.sprintf "%s%s = function(%s)\n%s\n%send" (indent level) name
     (Printer.list_repr params (fun p -> p) ", ")
     (emit_stmts (level + 1) body)

@@ -6,7 +6,7 @@ type lexeme =
   | Boolean
   | String
   | Name
-  | Fn
+  | Fun
   | Let
   | If
   | Else

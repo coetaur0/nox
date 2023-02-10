@@ -73,7 +73,7 @@ let rec parse_stmts parser = parse_list parser parse_stmt Token.Semicolon [Token
 
 and parse_stmt parser =
   match parser.token.kind with
-  | Token.Fn -> parse_fn parser
+  | Token.Fun -> parse_fun parser
   | Token.Let -> parse_let parser
   | _ ->
     let lhs = parse_unary parser in
@@ -86,12 +86,12 @@ and parse_stmt parser =
       Ast.{value = Expr node.value; span = node.span}
     )
 
-and parse_fn parser =
+and parse_fun parser =
   let start = parser.token.span in
-  let (fns, span_end) = parse_fns parser in
-  Ast.{value = Fn fns; span = Source.merge start span_end}
+  let (funs, span_end) = parse_funs parser in
+  Ast.{value = Fun funs; span = Source.merge start span_end}
 
-and parse_fns parser =
+and parse_funs parser =
   ignore (advance parser);
   let name = parse_name "expect a function name" parser in
   ignore (consume parser Token.LParen "expect a '('");
@@ -102,8 +102,8 @@ and parse_fns parser =
   ignore (consume parser Token.RParen "expect a ')'");
   synchronize parser [Token.LBrace];
   let body = parse_block parser in
-  if parser.token.kind = Token.Fn then (
-    let (rest, span_end) = parse_fns parser in
+  if parser.token.kind = Token.Fun then (
+    let (rest, span_end) = parse_funs parser in
     ((name, params, body) :: rest, span_end)
   ) else
     ([(name, params, body)], body.span)

@@ -26,29 +26,29 @@ let check_error string expected =
 (* ----- Test functions ------------------------------------------------------------------------- *)
 
 let check_polymorphic_fn _ =
-  check "fn f(x) {x}; f(true); f(1)" "number";
-  check "fn f(a, b) {if true {a} else {b}}; f" "('a, 'a) -> 'a";
-  check "fn mkref(x) { &x }; mkref" "('a) -> &'a";
-  check "fn deref(r) { @r }; deref" "(&'a) -> 'a";
-  check "fn assign(r, x) { r <- x }; assign" "(&'a, 'a) -> unit"
+  check "fun f(x) {x}; f(true); f(1)" "number";
+  check "fun f(a, b) {if true {a} else {b}}; f" "('a, 'a) -> 'a";
+  check "fun mkref(x) { &x }; mkref" "('a) -> &'a";
+  check "fun deref(r) { @r }; deref" "(&'a) -> 'a";
+  check "fun assign(r, x) { r <- x }; assign" "(&'a, 'a) -> unit"
 
 let check_recursive_fn _ =
-  check "fn fib(n) {if n == 0 {0} else if n == 1 {1} else {fib(n - 1) + fib(n - 2)}}; fib"
+  check "fun fib(n) {if n == 0 {0} else if n == 1 {1} else {fib(n - 1) + fib(n - 2)}}; fib"
     "(number) -> number";
-  check "fn fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact" "(number) -> number"
+  check "fun fact(n) {if n <= 0 {1} else {fact(n - 1) * n}}; fact" "(number) -> number"
 
 let check_mutually_recursive_fn _ =
-  check "fn f() {g()} fn g() {42}; f" "() -> number";
+  check "fun f() {g()} fun g() {42}; f" "() -> number";
   check
-    "fn even(n) {if n == 0 {true} else {odd(n - 1)}} fn odd(n) {if n == 0 {false} else {even(n - \
+    "fun even(n) {if n == 0 {true} else {odd(n - 1)}} fun odd(n) {if n == 0 {false} else {even(n - \
      1)}}; even"
     "(number) -> boolean"
 
-let check_empty_fn _ = check "fn f() {}; f" "() -> unit"
+let check_empty_fn _ = check "fun f() {}; f" "() -> unit"
 
 let check_invalid_fn _ =
-  check_error "fn wrong(b) {if b {b + 1} else {b - 1}}; wrong"
-    "1:17..1:18: expect a value of type boolean, but found a number value."
+  check_error "fun wrong(b) {if b {b + 1} else {b - 1}}; wrong"
+    "1:18..1:19: expect a value of type boolean, but found a number value."
 
 let check_generic_var _ = check "let id = <x> {x}; id(()); id(1); id(true)" "boolean"
 
@@ -94,11 +94,11 @@ let check_invalid_if_expr _ =
     "1:4..1:6: expect a value of type boolean, but found a number value.";
   check_error "if true {5}" "1:9..1:12: expect a value of type unit, but found a number value."
 
-let check_application_expr _ = check "fn f(x, y) {x + y}; f(1, 2)" "number"
+let check_application_expr _ = check "fun f(x, y) {x + y}; f(1, 2)" "number"
 
 let check_invalid_application_expr _ =
-  check_error "fn f(b, c) {b == c}; f(true, 1)"
-    "1:30..1:31: expect a value of type boolean, but found a number value."
+  check_error "fun f(b, c) {b == c}; f(true, 1)"
+    "1:31..1:32: expect a value of type boolean, but found a number value."
 
 let check_lambda_expr _ =
   check "<x> {x}" "('a) -> 'a";

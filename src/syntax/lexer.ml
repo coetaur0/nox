@@ -67,7 +67,7 @@ let lex_identifier lexer =
   let identifier = consume lexer is_alnum in
   let kind =
     match identifier with
-    | "fn" -> Token.Fn
+    | "fun" -> Token.Fun
     | "let" -> Token.Let
     | "if" -> Token.If
     | "else" -> Token.Else

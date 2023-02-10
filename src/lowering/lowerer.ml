@@ -41,19 +41,19 @@ let rec lower_stmts env = function
 
 and lower_stmt env node =
   match Ast.(node.value) with
-  | Ast.Fn fns -> lower_fns env fns
+  | Ast.Fun funs -> lower_funs env funs
   | Ast.Let (name, value) -> lower_let env name value
   | Ast.Update (lhs, rhs) -> lower_update env lhs rhs
   | Ast.Expr expr -> (env, assign env (Ir.Var "_") Ast.{value = expr; span = node.span})
 
-and lower_fns env fns =
+and lower_funs env funs =
   let env' =
-    List.fold_left (fun env' (name, _, _) -> Environment.add name (gensym name) env') env fns
+    List.fold_left (fun env' (name, _, _) -> Environment.add name (gensym name) env') env funs
   in
-  let ir_fns = List.map (fun (name, params, body) -> lower_fn env' name params body) fns in
-  (env', [Ir.Fn ir_fns])
+  let ir_funs = List.map (fun (name, params, body) -> lower_fun env' name params body) funs in
+  (env', [Ir.Fun ir_funs])
 
-and lower_fn env name params body =
+and lower_fun env name params body =
   let (env', params') = mangle_list env params in
   (Environment.find name env, params', return env' body)
 
