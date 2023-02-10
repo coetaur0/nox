@@ -9,7 +9,7 @@ The language can either be used interactively in its own [REPL](https://en.wikip
 Compute the factorial of a number `n` with a recursive function in Nox:
 
 ```
-fn fact(n) {
+fun fact(n) {
   if n <= 1 {
     1
   } else {
