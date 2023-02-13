@@ -32,8 +32,12 @@ type lexeme =
   | RParen
   | LBrace
   | RBrace
+  | LBracket
+  | RBracket
   | Comma
   | Semicolon
+  | Pipe
+  | Dot
   | Eof
   | BadString
   | Unknown

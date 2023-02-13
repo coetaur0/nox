@@ -30,7 +30,10 @@ let check_polymorphic_fn _ =
   check "fun f(a, b) {if true {a} else {b}}; f" "('a, 'a) -> 'a";
   check "fun mkref(x) { &x }; mkref" "('a) -> &'a";
   check "fun deref(r) { @r }; deref" "(&'a) -> 'a";
-  check "fun assign(r, x) { r <- x }; assign" "(&'a, 'a) -> unit"
+  check "fun assign(r, x) { r <- x }; assign" "(&'a, 'a) -> unit";
+  check "fun get_x(rec) { rec.x }; get_x" "([x : 'a | 'b]) -> 'a";
+  check "fun add_x(lhs, rhs) { lhs.x + rhs.x }; add_x"
+    "([x : number | 'a], [x : number | 'b]) -> number"
 
 let check_recursive_fn _ =
   check "fun fib(n) {if n == 0 {0} else if n == 1 {1} else {fib(n - 1) + fib(n - 2)}}; fib"
@@ -98,7 +101,21 @@ let check_application_expr _ = check "fun f(x, y) {x + y}; f(1, 2)" "number"
 
 let check_invalid_application_expr _ =
   check_error "fun f(b, c) {b == c}; f(true, 1)"
-    "1:31..1:32: expect a value of type boolean, but found a number value."
+    "1:31..1:32: expect a value of type boolean, but found a number value.";
+  check_error "fun get_x(r) { r.x }; get_x([b = true])"
+    "1:29..1:39: record doesn't contain label 'x'."
+
+let check_record_expr _ =
+  check "[a = 42, b = true, c = \"str\"]" "[a : number, b : boolean, c : string | []]";
+  check "[a = 42 | [a = true]]" "[a : number | []]";
+  check "[a = 42, b = true | [b = 33]]" "[a : number, b : boolean | []]"
+
+let check_select_expr _ =
+  check "[a = 42, b = true].a" "number";
+  check "[a = [a = true, b = ()]].a.a" "boolean"
+
+let check_invalid_select_expr _ =
+  check_error "[a = true].b" "1:12..1:13: record doesn't contain label 'b'."
 
 let check_lambda_expr _ =
   check "<x> {x}" "('a) -> 'a";
@@ -137,6 +154,9 @@ let tests =
          "Invalid if expressions" >:: check_invalid_if_expr;
          "Application expressions" >:: check_application_expr;
          "Invalid application expressions" >:: check_invalid_application_expr;
+         "Record expressions" >:: check_record_expr;
+         "Select expressions" >:: check_select_expr;
+         "Invalid select expressions" >:: check_invalid_select_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;

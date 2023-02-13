@@ -65,6 +65,7 @@ and eval_expr env node =
   | Ast.String string -> Values.String string
   | Ast.Unit -> Values.Unit
   | Ast.Invalid -> failwith "Invalid expression"
+  | _ -> failwith "TODO: implement records"
 
 and eval_binary env op lhs rhs =
   let left_value = eval_expr env lhs in

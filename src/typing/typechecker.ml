@@ -52,6 +52,7 @@ let rec generalise = function
   | Types.Var {contents = Bound ty} -> generalise ty
   | Types.Var {contents = Free (x, level)} when level > !current_level -> Types.Generic x
   | Types.Ref ty -> Types.Ref (generalise ty)
+  | Types.Record (fields, row) -> Types.Record (Environment.map generalise fields, generalise row)
   | _ as ty -> ty
 
 let instantiate ty =
@@ -66,11 +67,23 @@ let instantiate ty =
         var )
     | Types.Var {contents = Bound ty} -> instantiate' ty
     | Types.Ref ty -> Types.Ref (instantiate' ty)
+    | Types.Record (fields, row) ->
+      Types.Record (Environment.map instantiate' fields, instantiate' row)
     | _ as ty -> ty
   in
   instantiate' ty
 
 (* ----- Unification functions ------------------------------------------------------------------ *)
+
+let rec merge_fields = function
+  | Types.Var {contents = Bound ty} -> merge_fields ty
+  | Types.Var _ as var -> (Environment.empty, var)
+  | Types.Record (fields, row) -> (
+    match merge_fields row with
+    | (fields', row') when Environment.is_empty fields' -> (fields, row')
+    | (fields', row') -> (Environment.merge fields fields', row') )
+  | Types.EmptyRecord -> (Environment.empty, Types.EmptyRecord)
+  | _ -> failwith "expect a row type"
 
 let rec occurs typevar = function
   | Types.Fun (params, return) -> List.exists (occurs typevar) params || occurs typevar return
@@ -85,6 +98,8 @@ let rec occurs typevar = function
     typevar' := Free (x', min_level);
     false
   | Types.Ref ty -> occurs typevar ty
+  | Types.Record (fields, row) ->
+    Environment.exists (fun _ ty -> occurs typevar ty) fields || occurs typevar row
   | _ -> false
 
 let rec unify span lhs rhs =
@@ -104,10 +119,17 @@ let rec unify span lhs rhs =
       else
         typevar := Bound ty
     | (Types.Ref lhs_ty, Types.Ref rhs_ty) -> unify span lhs_ty rhs_ty
+    | ((Types.Record _ as lhs_record), (Types.Record _ as rhs_record)) ->
+      unify_records span lhs_record rhs_record
+    | (Types.Record (fields, _), Types.EmptyRecord) | (Types.EmptyRecord, Types.Record (fields, _))
+      ->
+      let (label, _) = Environment.choose fields in
+      raise (TypeError {message = Printf.sprintf "record doesn't contain label '%s'" label; span})
     | (Types.Number, Types.Number)
      |(Types.Boolean, Types.Boolean)
-     |(Types.Unit, Types.Unit)
-     |(Types.String, Types.String) ->
+     |(Types.String, Types.String)
+     |(Types.EmptyRecord, Types.EmptyRecord)
+     |(Types.Unit, Types.Unit) ->
       ()
     | _ ->
       raise
@@ -117,6 +139,45 @@ let rec unify span lhs rhs =
                  (Printer.type_repr lhs) (Printer.type_repr rhs);
              span } )
   )
+
+and unify_records span lhs rhs =
+  let rec unify_fields lhs_fields rhs_fields lhs_missing rhs_missing =
+    match (lhs_fields, rhs_fields) with
+    | ((lhs_name, lhs_type) :: lhs_rest, (rhs_name, rhs_type) :: rhs_rest) -> (
+      match String.compare lhs_name rhs_name with
+      | 0 ->
+        unify span lhs_type rhs_type;
+        unify_fields lhs_rest rhs_rest lhs_missing rhs_missing
+      | x when x < 0 ->
+        unify_fields lhs_rest rhs_fields lhs_missing (Environment.add lhs_name lhs_type rhs_missing)
+      | _ ->
+        unify_fields lhs_fields rhs_rest (Environment.add rhs_name rhs_type lhs_missing) rhs_missing
+      )
+    | ([], []) -> (lhs_missing, rhs_missing)
+    | ([], _) -> (Environment.merge (Environment.of_list rhs_fields) lhs_missing, rhs_missing)
+    | (_, []) -> (lhs_missing, Environment.merge (Environment.of_list lhs_fields) rhs_missing)
+  in
+  let (lhs_fields, lhs_rest) = merge_fields lhs in
+  let (rhs_fields, rhs_rest) = merge_fields rhs in
+  let (lhs_missing, rhs_missing) =
+    unify_fields (Environment.bindings lhs_fields) (Environment.bindings rhs_fields)
+      Environment.empty Environment.empty
+  in
+  match (Environment.is_empty lhs_missing, Environment.is_empty rhs_missing) with
+  | (true, true) -> unify span lhs_rest rhs_rest
+  | (true, false) -> unify span rhs_rest (Types.Record (rhs_missing, lhs_rest))
+  | (false, true) -> unify span lhs_rest (Types.Record (lhs_missing, rhs_rest))
+  | (false, false) -> (
+    match lhs_rest with
+    | Types.Var ({contents = Free _} as var) ->
+      let record_var = new_var !current_level in
+      unify span rhs_rest (Types.Record (rhs_missing, record_var));
+      ( match !var with
+      | Bound _ -> raise (TypeError {message = "recursive row types"; span})
+      | _ -> () );
+      unify span lhs_rest (Types.Record (lhs_missing, record_var))
+    | Types.EmptyRecord -> unify span lhs_rest (Types.Record (lhs_missing, new_var 0))
+    | _ -> assert false )
 
 (* ----- Type inference functions --------------------------------------------------------------- *)
 
@@ -192,6 +253,8 @@ and infer_expr env node =
     ty
   | Ast.If (cond, thn, els) -> infer_if env cond thn els
   | Ast.App (callee, args) -> infer_app env callee args
+  | Ast.Record (fields, record) -> infer_record env fields record
+  | Ast.Select (path, field) -> infer_select env path field
   | Ast.Lambda (params, body) -> infer_lambda env params body
   | Ast.Var x -> (
     try instantiate (Environment.find x env)
@@ -200,6 +263,7 @@ and infer_expr env node =
   | Ast.Number _ -> Types.Number
   | Ast.Boolean _ -> Types.Boolean
   | Ast.String _ -> Types.String
+  | Ast.EmptyRecord -> Types.EmptyRecord
   | Ast.Unit -> Types.Unit
   | Ast.Invalid ->
     raise (TypeError {message = "cannot type an invalid expression"; span = node.span})
@@ -269,6 +333,21 @@ and infer_app env callee args =
     (fun param_type arg -> unify Ast.(arg.span) param_type (infer_expr env arg))
     param_types args;
   return_type
+
+and infer_record env fields record =
+  let record_ty = new_var !current_level in
+  unify record.span record_ty (infer_expr env record);
+  let fields_ty = Environment.map (infer_expr env) fields in
+  let (fields_ty', record_ty') = merge_fields (Types.Record (fields_ty, record_ty)) in
+  Types.Record (fields_ty', record_ty')
+
+and infer_select env path field =
+  let record_ty = new_var !current_level in
+  let field_ty = new_var !current_level in
+  unify field.span
+    (Types.Record (Environment.singleton field.value field_ty, record_ty))
+    (infer_expr env path);
+  field_ty
 
 and infer_lambda env params body =
   let param_types = List.map (fun _ -> new_var !current_level) params in

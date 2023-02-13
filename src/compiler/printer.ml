@@ -69,12 +69,21 @@ and ast_expr_repr expr =
     Printf.sprintf "if %s %s else %s" (ast_expr_repr cond) (ast_expr_repr thn) (ast_expr_repr els)
   | Ast.App (callee, args) ->
     Printf.sprintf "%s(%s)" (ast_expr_repr callee) (list_repr args ast_expr_repr ", ")
+  | Ast.Record (fields, record) ->
+    let fields_repr =
+      list_repr (Environment.bindings fields)
+        (fun (name, value) -> Printf.sprintf "%s = %s" name (ast_expr_repr value))
+        ", "
+    in
+    Printf.sprintf "[%s | %s]" fields_repr (ast_expr_repr record)
+  | Ast.Select (record, field) -> Printf.sprintf "%s.%s" (ast_expr_repr record) field.value
   | Ast.Lambda (params, body) ->
     Printf.sprintf "<%s> %s" (list_repr params (fun p -> p) ", ") (ast_expr_repr body)
   | Ast.Var x -> x
   | Ast.Number num -> string_of_float num
   | Ast.Boolean bool -> string_of_bool bool
   | Ast.String string -> Printf.sprintf "\"%s\"" string
+  | Ast.EmptyRecord -> "[]"
   | Ast.Unit -> "()"
   | Ast.Invalid -> "<invalid expression>"
 
@@ -88,9 +97,17 @@ let rec type_repr ty =
   | Types.Var {contents = Bound ty'} -> type_repr ty'
   | Types.Var {contents = Free (x, _)} -> x
   | Types.Ref ty' -> Printf.sprintf "&%s" (type_repr ty')
+  | Types.Record (fields, row) ->
+    let fields_repr =
+      list_repr (Environment.bindings fields)
+        (fun (name, ty) -> Printf.sprintf "%s : %s" name (type_repr ty))
+        ", "
+    in
+    Printf.sprintf "[%s | %s]" fields_repr (type_repr row)
   | Types.Number -> "number"
   | Types.Boolean -> "boolean"
   | Types.String -> "string"
+  | Types.EmptyRecord -> "[]"
   | Types.Unit -> "unit"
 
 (* ----- Runtime values representation functions ------------------------------------------------ *)

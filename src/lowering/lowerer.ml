@@ -111,6 +111,7 @@ and lower_expr env node =
   | Ast.String string -> ([], Ir.String string)
   | Ast.Unit -> ([], Ir.Unit)
   | Ast.Invalid -> failwith "Unreachable case"
+  | _ -> failwith "TODO: implement records"
 
 and lower_binary env op lhs rhs =
   let (lhs_stmts, lhs_expr) = lower_expr env lhs in

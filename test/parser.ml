@@ -63,6 +63,15 @@ let check_block_expr _ =
 
 let check_invalid_block_expr _ = check_errors "{let x = 3; x" ["1:14..1:14: expect a '}'."]
 
+let check_record_expr _ =
+  check "[a = 42, b = true]" "[a = 42., b = true | []]";
+  check "[]" "[]";
+  check "[|[a = 42]]" "[a = 42. | []]"
+
+let check_invalid_record_expr _ =
+  check_errors "[= 3]" ["1:2..1:3: expect a field name."];
+  check_errors "[a 42]" ["1:4..1:6: expect a '='."]
+
 let check_if_expr _ =
   check "if c == 0 {42} else if c > 0 {-42} else {1}"
     "if (c == 0.) {42.} else if (c > 0.) {-42.} else {1.}";
@@ -77,6 +86,11 @@ let check_application_expr _ =
   check "h(true)(42)" "h(true)(42.)"
 
 let check_invalid_application_expr _ = check_errors "f(2" ["1:4..1:4: expect a ')'."]
+
+let check_select_expr _ =
+  check "a.b.c" "a.b.c";
+  check "[a = 42].a" "[a = 42. | []].a";
+  check "f().g().x" "f().g().x"
 
 let check_lambda_expr _ =
   check "<> {true}" "<> {true}";
@@ -113,10 +127,13 @@ let tests =
          "Invalid unary expressions" >:: check_invalid_unary_expr;
          "Block expressions" >:: check_block_expr;
          "Invalid block expressions" >:: check_invalid_block_expr;
+         "Record expressions" >:: check_record_expr;
+         "Invalid record expressions" >:: check_invalid_record_expr;
          "If expressions" >:: check_if_expr;
          "Invalid if expressions" >:: check_invalid_if_expr;
          "Application expressions" >:: check_application_expr;
          "Invalid application expressions" >:: check_invalid_application_expr;
+         "Selection expressions" >:: check_select_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Invalid lambda expressions" >:: check_invalid_lamba_expr;
          "Variable expressions" >:: check_var_expr;

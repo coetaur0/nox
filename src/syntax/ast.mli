@@ -45,10 +45,13 @@ and expr =
   | Block of stmt node list
   | If of expr node * expr node * expr node
   | App of expr node * expr node list
+  | Record of expr node Environment.t * expr node
+  | Select of expr node * name node
   | Lambda of name list * expr node
   | Var of name
   | Number of float
   | Boolean of bool
   | String of string
+  | EmptyRecord
   | Unit
   | Invalid

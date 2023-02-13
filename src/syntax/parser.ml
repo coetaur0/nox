@@ -158,28 +158,36 @@ and parse_unary parser =
     let start = (advance parser).span in
     let operand = parse_unary parser in
     Ast.{value = Unary (op, operand); span = Source.merge start operand.span}
-  | None -> parse_app parser
+  | None -> parse_path parser
 
-and parse_app parser =
-  let rec parse_args callee =
-    if parser.token.kind = Token.LParen then (
+and parse_path parser =
+  let rec parse_path' path =
+    match parser.token.kind with
+    | Token.LParen ->
       ignore (advance parser);
       let args = parse_list parser parse_expr Token.Comma [Token.RParen] in
       let span_end =
         match consume parser Token.RParen "expect a ')'" with
         | Some token -> token.span
-        | None -> Ast.(callee.span)
+        | None -> Ast.(path.span)
       in
-      parse_args Ast.{value = App (callee, args); span = Source.merge callee.span span_end}
-    ) else
-      callee
+      parse_path' Ast.{value = App (path, args); span = Source.merge path.span span_end}
+    | Token.Dot -> (
+      ignore (advance parser);
+      match consume parser Token.Name "expect a field name" with
+      | Some token ->
+        let field = Ast.{value = Source.read parser.source token.span; span = token.span} in
+        parse_path' Ast.{value = Select (path, field); span = Source.merge path.span field.span}
+      | None -> path )
+    | _ -> path
   in
-  let callee = parse_primary parser in
-  parse_args callee
+  let path = parse_primary parser in
+  parse_path' path
 
 and parse_primary parser =
   match parser.token.kind with
   | Token.LBrace -> parse_block parser
+  | Token.LBracket -> parse_record parser
   | Token.If -> parse_if parser
   | Token.Lt -> parse_lambda parser
   | Token.Name -> parse_var parser
@@ -201,6 +209,36 @@ and parse_block parser =
     | None -> parser.token.span.left
   in
   Ast.{value = Block stmts; span = Source.{left; right}}
+
+and parse_record parser =
+  let parse_field parser =
+    match consume parser Token.Name "expect a field name" with
+    | Some name ->
+      ignore (consume parser Token.Assign "expect a '='");
+      let value = parse_expr parser in
+      (Source.read parser.source name.span, value)
+    | None -> ("", Ast.{value = Invalid; span = parser.token.span})
+  in
+  let left = (advance parser).span.left in
+  let fields =
+    Environment.of_list (parse_list parser parse_field Token.Comma [Token.Pipe; Token.RBracket])
+  in
+  let record =
+    if parser.token.kind = Token.Pipe then (
+      ignore (advance parser);
+      parse_record parser
+    ) else
+      Ast.{value = EmptyRecord; span = parser.token.span}
+  in
+  let right =
+    match consume parser Token.RBracket "expect a ']'" with
+    | Some token -> token.span.right
+    | None -> parser.token.span.left
+  in
+  if Environment.is_empty fields then
+    record
+  else
+    Ast.{value = Record (fields, record); span = Source.{left; right}}
 
 and parse_if parser =
   let start = (advance parser).span in

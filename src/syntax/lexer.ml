@@ -119,8 +119,12 @@ let lex_symbol lexer =
     | (Some ')', _) -> (Token.RParen, 1)
     | (Some '{', _) -> (Token.LBrace, 1)
     | (Some '}', _) -> (Token.RBrace, 1)
+    | (Some '[', _) -> (Token.LBracket, 1)
+    | (Some ']', _) -> (Token.RBracket, 1)
     | (Some ',', _) -> (Token.Comma, 1)
     | (Some ';', _) -> (Token.Semicolon, 1)
+    | (Some '|', _) -> (Token.Pipe, 1)
+    | (Some '.', _) -> (Token.Dot, 1)
     | _ -> (Token.Unknown, 1)
   in
   advance lexer length;

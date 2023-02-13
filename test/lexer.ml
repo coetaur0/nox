@@ -74,13 +74,17 @@ let check_operators _ =
       (Token.Eof, "") ]
 
 let check_punctuation _ =
-  check "(){},;"
+  check "(){}[],;|."
     [ (Token.LParen, "(");
       (Token.RParen, ")");
       (Token.LBrace, "{");
       (Token.RBrace, "}");
+      (Token.LBracket, "[");
+      (Token.RBracket, "]");
       (Token.Comma, ",");
       (Token.Semicolon, ";");
+      (Token.Pipe, "|");
+      (Token.Dot, ".");
       (Token.Eof, "") ]
 
 (* ----- Tests ---------------------------------------------------------------------------------- *)
