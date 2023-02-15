@@ -58,14 +58,23 @@ and eval_expr env node =
   | Ast.Block stmts -> eval_block env stmts
   | Ast.If (cond, thn, els) -> eval_if env cond thn els
   | Ast.App (callee, args) -> eval_app env callee args
+  | Ast.Record (fields, record) -> (
+    let fields' = Environment.map (eval_expr env) fields in
+    match eval_expr env record with
+    | Values.Record record' -> Values.Record (Environment.merge fields' record')
+    | _ -> failwith "expect a record" )
+  | Ast.Select (expr, field) -> (
+    match eval_expr env expr with
+    | Values.Record record -> Environment.find field.value record
+    | _ -> failwith "expect a record" )
   | Ast.Lambda (params, body) -> Values.Closure (ref env, params, body)
   | Ast.Var x -> Environment.find x env
   | Ast.Number num -> Values.Number num
   | Ast.Boolean bool -> Values.Boolean bool
   | Ast.String string -> Values.String string
+  | Ast.EmptyRecord -> Values.Record Environment.empty
   | Ast.Unit -> Values.Unit
   | Ast.Invalid -> failwith "Invalid expression"
-  | _ -> failwith "TODO: implement records"
 
 and eval_binary env op lhs rhs =
   let left_value = eval_expr env lhs in

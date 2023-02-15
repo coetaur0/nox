@@ -226,7 +226,7 @@ and parse_record parser =
   let record =
     if parser.token.kind = Token.Pipe then (
       ignore (advance parser);
-      parse_record parser
+      parse_expr parser
     ) else
       Ast.{value = EmptyRecord; span = parser.token.span}
   in

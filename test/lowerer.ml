@@ -66,6 +66,18 @@ let check_application_expr _ =
   check "fun f(x) {x + 1}; f(2)" "fun f0(x1) {return (x1 + 1.)}; return f0(2.)";
   check "<x> {x * 2}(3)" "return <x0> {return (x0 * 2.)}(3.)"
 
+let check_record_expr _ =
+  check "[a = 42, b = true, c = ()]"
+    "let tmp0; tmp0 = []; tmp0.a = 42.; tmp0.b = true; tmp0.c = (); return tmp0";
+  check "[num = 42, bool = true | [r = [a = 1, b = 2]]]"
+    "let tmp0; tmp0 = []; tmp0.bool = true; tmp0.num = 42.; let tmp1; tmp1 = []; tmp1.a = 1.; \
+     tmp1.b = 2.; tmp0.r = tmp1; return tmp0";
+  check "[a = 10 | [a = true]]" "let tmp0; tmp0 = []; tmp0.a = 10.; return tmp0";
+  check "[]" "let tmp0; tmp0 = []; return tmp0"
+
+let check_select_expr _ =
+  check "[a = 42, b = true].b" "let tmp0; tmp0 = []; tmp0.a = 42.; tmp0.b = true; return tmp0.b"
+
 let check_lambda_expr _ = check "<x, y> {x + y}" "return <x0, y1> {return (x0 + y1)}"
 
 let check_number _ = check "42" "return 42."
@@ -93,6 +105,8 @@ let tests =
          "Block expressions" >:: check_block_expr;
          "If expressions" >:: check_if_expr;
          "Application expressions" >:: check_application_expr;
+         "Record expressions" >:: check_record_expr;
+         "Select expressions" >:: check_select_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;

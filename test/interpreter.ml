@@ -57,6 +57,13 @@ let check_application_expr _ =
   check "fun mkref(x) { &x }; mkref(3)" "&3.";
   check "fun assign(r, x) { r <- x; x }; assign(&42, 43)" "43."
 
+let check_record_expr _ =
+  check "[num = 42, bool = true, str = \"some string\"]"
+    "[bool = true, num = 42., str = \"some string\"]";
+  check "[]" "[]"
+
+let check_select_expr _ = check "[a = 32, b = ()].a" "32."
+
 let check_lambda_expr _ =
   check "<x> {x}" "<closure>";
   check "<x> {let y = <z> {x(z)}; y}" "<closure>"
@@ -86,6 +93,8 @@ let tests =
          "Unary expressions" >:: check_unary_expr;
          "If expressions" >:: check_if_expr;
          "Application expressions" >:: check_application_expr;
+         "Record expressions" >:: check_record_expr;
+         "Select expressions" >:: check_select_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;

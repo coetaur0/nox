@@ -63,6 +63,7 @@ and emit_expr level = function
   | Ir.Unary (op, operand) -> emit_unary level op operand
   | Ir.App (callee, args) ->
     Printf.sprintf "%s(%s)" (emit_expr level callee) (Printer.list_repr args (emit_expr level) ", ")
+  | Ir.Select (record, field) -> Printf.sprintf "%s.%s" (emit_expr level record) field
   | Ir.Lambda (params, body) ->
     Printf.sprintf "function(%s)\n%s\n%send"
       (Printer.list_repr params (fun p -> p) ", ")
@@ -72,6 +73,7 @@ and emit_expr level = function
   | Ir.Number num -> string_of_float num
   | Ir.Boolean bool -> string_of_bool bool
   | Ir.String string -> Printf.sprintf "\"%s\"" string
+  | Ir.EmptyRecord -> "{}"
   | Ir.Unit -> "nil"
 
 and emit_unary level op operand =

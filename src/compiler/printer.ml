@@ -116,6 +116,12 @@ let rec value_repr = function
   | Values.Closure _ -> "<closure>"
   | Values.NativeFun _ -> "<native fun>"
   | Values.Ref value -> Printf.sprintf "&%s" (value_repr !value)
+  | Values.Record record ->
+    let fields = Environment.bindings record in
+    Printf.sprintf "[%s]"
+      (list_repr fields
+         (fun (name, value) -> Printf.sprintf "%s = %s" name (value_repr value))
+         ", " )
   | Values.Number num -> string_of_float num
   | Values.Boolean bool -> string_of_bool bool
   | Values.String string -> Printf.sprintf "\"%s\"" string
@@ -143,10 +149,12 @@ and ir_expr_repr = function
   | Ir.Unary (op, operand) -> Printf.sprintf "%s%s" (unop_repr op) (ir_expr_repr operand)
   | Ir.App (callee, args) ->
     Printf.sprintf "%s(%s)" (ir_expr_repr callee) (list_repr args ir_expr_repr ", ")
+  | Ir.Select (record, field) -> Printf.sprintf "%s.%s" (ir_expr_repr record) field
   | Ir.Lambda (params, body) ->
     Printf.sprintf "<%s> {%s}" (list_repr params (fun p -> p) ", ") (ir_repr body)
   | Ir.Var x -> x
   | Ir.Number num -> string_of_float num
   | Ir.Boolean bool -> string_of_bool bool
   | Ir.String string -> Printf.sprintf "\"%s\"" string
+  | Ir.EmptyRecord -> "[]"
   | Ir.Unit -> "()"

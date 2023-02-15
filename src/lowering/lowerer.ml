@@ -30,6 +30,13 @@ let mangle_list env names =
   in
   (env', List.rev names')
 
+let rec merge_fields fields record =
+  match Ast.(record.value) with
+  | Ast.Record (fields', record') ->
+    let (fields'', record'') = merge_fields fields' record' in
+    (Environment.merge fields fields'', record'')
+  | _ -> (fields, record)
+
 (* ----- Lowering functions --------------------------------------------------------------------- *)
 
 let rec lower_stmts env = function
@@ -104,14 +111,30 @@ and lower_expr env node =
     let ir_stmts = assign env (Ir.Var tmp) node in
     ([Ir.Decl tmp] @ ir_stmts, Ir.Var tmp)
   | Ast.App (callee, args) -> lower_app env callee args
+  | Ast.Record (fields, record) ->
+    let (fields', record') = merge_fields fields record in
+    let (record_stmts, record_expr) = lower_expr env record' in
+    let fields_stmts =
+      Environment.fold
+        (fun name value stmts ->
+          let (field_stmts, field_expr) = lower_expr env value in
+          stmts @ field_stmts @ [Ir.Assign (Ir.Select (record_expr, name), field_expr)] )
+        fields' []
+    in
+    (record_stmts @ fields_stmts, record_expr)
+  | Ast.Select (record, field) ->
+    let (record_stmts, record_expr) = lower_expr env record in
+    (record_stmts, Ir.Select (record_expr, field.value))
   | Ast.Lambda (params, body) -> lower_lambda env params body
   | Ast.Var x -> ([], Ir.Var (Environment.find x env))
   | Ast.Number num -> ([], Ir.Number num)
   | Ast.Boolean bool -> ([], Ir.Boolean bool)
   | Ast.String string -> ([], Ir.String string)
   | Ast.Unit -> ([], Ir.Unit)
+  | Ast.EmptyRecord ->
+    let tmp = gensym "tmp" in
+    ([Ir.Decl tmp; Ir.Assign (Ir.Var tmp, Ir.EmptyRecord)], Ir.Var tmp)
   | Ast.Invalid -> failwith "Unreachable case"
-  | _ -> failwith "TODO: implement records"
 
 and lower_binary env op lhs rhs =
   let (lhs_stmts, lhs_expr) = lower_expr env lhs in

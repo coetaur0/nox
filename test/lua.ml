@@ -119,6 +119,12 @@ let check_application_expr _ =
   check "fun f(x) {x + 1}; f(2)"
     "local f0\nf0 = function(x1)\n  return (x1 + 1.)\nend\nreturn f0(2.)"
 
+let check_record_expr _ =
+  check "[a = 42, b = true]" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\ntmp0.b = true\nreturn tmp0";
+  check "[a = 42 | [a = true]]" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\nreturn tmp0"
+
+let check_select_expr _ = check "[a = 42].a" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\nreturn tmp0.a"
+
 let check_lambda_expr _ = check "<x, y> {x + y}" "return function(x0, y1)\n  return (x0 + y1)\nend"
 
 let check_number _ = check "42" "return 42."
@@ -148,6 +154,8 @@ let tests =
          "Block expressions" >:: check_block_expr;
          "If expressions" >:: check_if_expr;
          "Application expressions" >:: check_application_expr;
+         "Record expressions" >:: check_record_expr;
+         "Select expressions" >:: check_select_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;

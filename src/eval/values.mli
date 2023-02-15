@@ -8,6 +8,7 @@ and t =
   | Closure of env ref * Ast.name list * Ast.expr Ast.node
   | NativeFun of (t list -> t)
   | Ref of t ref
+  | Record of t Environment.t
   | Number of float
   | Boolean of bool
   | String of string

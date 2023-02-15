@@ -13,9 +13,11 @@ and expr =
   | Binary of Ast.binop * expr * expr
   | Unary of Ast.unop * expr
   | App of expr * expr list
+  | Select of expr * Ast.name
   | Lambda of Ast.name list * stmt list
   | Var of Ast.name
   | Number of float
   | Boolean of bool
   | String of string
+  | EmptyRecord
   | Unit
