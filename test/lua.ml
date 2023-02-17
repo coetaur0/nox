@@ -121,7 +121,21 @@ let check_application_expr _ =
 
 let check_record_expr _ =
   check "[a = 42, b = true]" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\ntmp0.b = true\nreturn tmp0";
-  check "[a = 42 | [a = true]]" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\nreturn tmp0"
+  check "[a = 42 | [a = true]]" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\nreturn tmp0";
+  check "let r1 = [a = true]; let r2 = [a = 42 | r1]"
+    "local r10\n\
+     local tmp1\n\
+     tmp1 = {}\n\
+     tmp1.a = true\n\
+     r10 = tmp1\n\
+     local r22\n\
+     local tmp3 = {}\n\
+     for key, value in pairs(r10) do\n\
+    \  tmp3.key = value\n\
+     end\n\
+     tmp3.a = 42.\n\
+     r22 = tmp3\n\
+     return nil"
 
 let check_select_expr _ = check "[a = 42].a" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\nreturn tmp0.a"
 

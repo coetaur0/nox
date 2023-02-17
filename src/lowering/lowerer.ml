@@ -111,17 +111,7 @@ and lower_expr env node =
     let ir_stmts = assign env (Ir.Var tmp) node in
     ([Ir.Decl tmp] @ ir_stmts, Ir.Var tmp)
   | Ast.App (callee, args) -> lower_app env callee args
-  | Ast.Record (fields, record) ->
-    let (fields', record') = merge_fields fields record in
-    let (record_stmts, record_expr) = lower_expr env record' in
-    let fields_stmts =
-      Environment.fold
-        (fun name value stmts ->
-          let (field_stmts, field_expr) = lower_expr env value in
-          stmts @ field_stmts @ [Ir.Assign (Ir.Select (record_expr, name), field_expr)] )
-        fields' []
-    in
-    (record_stmts @ fields_stmts, record_expr)
+  | Ast.Record (fields, record) -> lower_record env fields record
   | Ast.Select (record, field) ->
     let (record_stmts, record_expr) = lower_expr env record in
     (record_stmts, Ir.Select (record_expr, field.value))
@@ -155,6 +145,25 @@ and lower_app env callee args =
       ([], []) args
   in
   (callee_stmts @ args_stmts, Ir.App (callee_expr, args_exprs))
+
+and lower_record env fields record =
+  let (fields', record') = merge_fields fields record in
+  let (record_stmts, record_expr) = lower_expr env record' in
+  let (copy_stmt, record_copy) =
+    match Ast.(record'.value) with
+    | Ast.Select _ | Ast.Var _ ->
+      let copy_name = gensym "tmp" in
+      ([Ir.CopyRecord (copy_name, record_expr)], Ir.Var copy_name)
+    | _ -> ([], record_expr)
+  in
+  let fields_stmts =
+    Environment.fold
+      (fun name value stmts ->
+        let (field_stmts, field_expr) = lower_expr env value in
+        stmts @ field_stmts @ [Ir.Assign (Ir.Select (record_copy, name), field_expr)] )
+      fields' []
+  in
+  (record_stmts @ copy_stmt @ fields_stmts, record_copy)
 
 and lower_lambda env params body =
   let (env', params') = mangle_list env params in

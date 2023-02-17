@@ -29,6 +29,11 @@ and emit_stmt level stmt =
   | Ir.Decl name -> Printf.sprintf "%slocal %s" (indent level) name
   | Ir.Assign (lhs, rhs) ->
     Printf.sprintf "%s%s = %s" (indent level) (emit_expr level lhs) (emit_expr level rhs)
+  | Ir.CopyRecord (name, record) ->
+    Printf.sprintf "%slocal %s = {}\n%sfor key, value in pairs(%s) do\n%s%s.key = value\n%send"
+      (indent level) name (indent level) (emit_expr level record)
+      (indent (level + 1))
+      name (indent level)
   | Ir.If (cond, thn, els) -> emit_if level cond thn els
   | Ir.Return value -> Printf.sprintf "%sreturn %s" (indent level) (emit_expr level value)
 

@@ -73,6 +73,9 @@ let check_record_expr _ =
     "let tmp0; tmp0 = []; tmp0.bool = true; tmp0.num = 42.; let tmp1; tmp1 = []; tmp1.a = 1.; \
      tmp1.b = 2.; tmp0.r = tmp1; return tmp0";
   check "[a = 10 | [a = true]]" "let tmp0; tmp0 = []; tmp0.a = 10.; return tmp0";
+  check "let r = [a = 10]; let rr = [a = true | r]"
+    "let r0; let tmp1; tmp1 = []; tmp1.a = 10.; r0 = tmp1; let rr2; tmp3 = copy(r0); tmp3.a = \
+     true; rr2 = tmp3; return ()";
   check "[]" "let tmp0; tmp0 = []; return tmp0"
 
 let check_select_expr _ =

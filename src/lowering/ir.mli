@@ -5,6 +5,7 @@ type stmt =
   | Fun of (Ast.name * Ast.name list * stmt list) list
   | Decl of Ast.name
   | Assign of expr * expr
+  | CopyRecord of Ast.name * expr
   | If of expr * stmt list * stmt list
   | Return of expr
 
