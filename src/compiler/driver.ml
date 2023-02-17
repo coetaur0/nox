@@ -45,6 +45,18 @@ let run_repl () =
     | Typechecker.TypeError diagnostic -> print_type_error "input" diagnostic
   done
 
+(* ----- Interpreter functions ------------------------------------------------------------------ *)
+
+let interpret path =
+  try
+    let stmts = Source.from_file path |> Parser.parse in
+    ignore (Typechecker.infer Typechecker.init_env stmts);
+    ignore (Interpreter.run Interpreter.init_env stmts)
+  with
+  | Sys_error error -> print_endline error
+  | Parser.SyntaxError diagnostics -> print_syntax_errors path diagnostics
+  | Typechecker.TypeError diagnostic -> print_type_error path diagnostic
+
 (* ----- Compilation functions ------------------------------------------------------------------ *)
 
 let compile path =
