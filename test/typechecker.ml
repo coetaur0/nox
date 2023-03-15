@@ -103,19 +103,19 @@ let check_invalid_application_expr _ =
   check_error "fun f(b, c) {b == c}; f(true, 1)"
     "1:31..1:32: expect a value of type boolean, but found a number value.";
   check_error "fun get_x(r) { r.x }; get_x([b = true])"
-    "1:29..1:39: record doesn't contain label 'x'."
+    "1:29..1:39: type doesn't contain label 'x'."
 
 let check_record_expr _ =
-  check "[a = 42, b = true, c = \"str\"]" "[a : number, b : boolean, c : string | []]";
-  check "[a = 42 | [a = true]]" "[a : number | []]";
-  check "[a = 42, b = true | [b = 33]]" "[a : number, b : boolean | []]"
+  check "[a = 42, b = true, c = \"str\"]" "[a : number, b : boolean, c : string]";
+  check "[a = 42 | [a = true]]" "[a : number]";
+  check "[a = 42, b = true | [b = 33]]" "[a : number, b : boolean]"
 
 let check_select_expr _ =
   check "[a = 42, b = true].a" "number";
   check "[a = [a = true, b = ()]].a.a" "boolean"
 
 let check_invalid_select_expr _ =
-  check_error "[a = true].b" "1:12..1:13: record doesn't contain label 'b'."
+  check_error "[a = true].b" "1:12..1:13: type doesn't contain label 'b'."
 
 let check_lambda_expr _ =
   check "<x> {x}" "('a) -> 'a";

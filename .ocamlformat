@@ -1,5 +1,5 @@
 profile = ocamlformat
-version = 0.24.1
+version = 0.25.1
 
 assignment-operator = end-line
 break-before-in = fit-or-vertical

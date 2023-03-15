@@ -9,11 +9,12 @@ type t =
   | Generic of name
   | Var of var ref
   | Ref of t
-  | Record of t Environment.t * t
+  | Record of t
   | Number
   | Boolean
   | String
-  | EmptyRecord
+  | Row of t Environment.t * t
+  | EmptyRow
   | Unit
 
 (** A type variable. *)

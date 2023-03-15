@@ -97,17 +97,20 @@ let rec type_repr ty =
   | Types.Var {contents = Bound ty'} -> type_repr ty'
   | Types.Var {contents = Free (x, _)} -> x
   | Types.Ref ty' -> Printf.sprintf "&%s" (type_repr ty')
-  | Types.Record (fields, row) ->
+  | Types.Record row -> Printf.sprintf "[%s]" (type_repr row)
+  | Types.Row (fields, row) -> (
     let fields_repr =
       list_repr (Environment.bindings fields)
         (fun (name, ty) -> Printf.sprintf "%s : %s" name (type_repr ty))
         ", "
     in
-    Printf.sprintf "[%s | %s]" fields_repr (type_repr row)
+    match row with
+    | Types.EmptyRow -> Printf.sprintf "%s" fields_repr
+    | _ -> Printf.sprintf "%s | %s" fields_repr (type_repr row) )
   | Types.Number -> "number"
   | Types.Boolean -> "boolean"
   | Types.String -> "string"
-  | Types.EmptyRecord -> "[]"
+  | Types.EmptyRow -> ""
   | Types.Unit -> "unit"
 
 (* ----- Runtime values representation functions ------------------------------------------------ *)

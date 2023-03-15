@@ -9,7 +9,7 @@ homepage: "https://github.com/coetaur0/nox"
 bug-reports: "https://github.com/coetaur0/nox/issues"
 depends: [
   "ocaml"
-  "dune" {>= "3.5"}
+  "dune" {>= "3.7"}
   "ounit2"
   "odoc" {with-doc}
 ]
