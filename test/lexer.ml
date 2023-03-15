@@ -22,8 +22,13 @@ let check string tokens =
 let check_comments _ = check "// This is a comment\n// And another one" [(Token.Eof, "")]
 
 let check_keywords _ =
-  check "fun let if else"
-    [(Token.Fun, "fun"); (Token.Let, "let"); (Token.If, "if"); (Token.Else, "else"); (Token.Eof, "")]
+  check "fun let if else match"
+    [ (Token.Fun, "fun");
+      (Token.Let, "let");
+      (Token.If, "if");
+      (Token.Else, "else");
+      (Token.Match, "match");
+      (Token.Eof, "") ]
 
 let check_names _ =
   check "id x1 _a snake_case camelCase PascalCase _"
@@ -35,6 +40,10 @@ let check_names _ =
       (Token.Name, "PascalCase");
       (Token.Name, "_");
       (Token.Eof, "") ]
+
+let check_cases _ =
+  check ":1 :Some :None"
+    [(Token.Case, ":1"); (Token.Case, ":Some"); (Token.Case, ":None"); (Token.Eof, "")]
 
 let check_numbers _ =
   check "0 1. 42 1337.7331"
@@ -74,7 +83,7 @@ let check_operators _ =
       (Token.Eof, "") ]
 
 let check_punctuation _ =
-  check "(){}[],;|."
+  check "(){}[],;|.=>$"
     [ (Token.LParen, "(");
       (Token.RParen, ")");
       (Token.LBrace, "{");
@@ -85,6 +94,8 @@ let check_punctuation _ =
       (Token.Semicolon, ";");
       (Token.Pipe, "|");
       (Token.Dot, ".");
+      (Token.Arrow, "=>");
+      (Token.Unknown, "$");
       (Token.Eof, "") ]
 
 (* ----- Tests ---------------------------------------------------------------------------------- *)
@@ -94,6 +105,7 @@ let tests =
   >::: [ "Comments" >:: check_comments;
          "Keywords" >:: check_keywords;
          "Names" >:: check_names;
+         "Cases" >:: check_cases;
          "Numbers" >:: check_numbers;
          "Booleans" >:: check_booleans;
          "Strings" >:: check_strings;

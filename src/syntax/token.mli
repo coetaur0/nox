@@ -6,10 +6,12 @@ type lexeme =
   | Boolean
   | String
   | Name
+  | Case
   | Fun
   | Let
   | If
   | Else
+  | Match
   | Assign
   | Update
   | Or
@@ -38,6 +40,7 @@ type lexeme =
   | Semicolon
   | Pipe
   | Dot
+  | Arrow
   | Eof
   | BadString
   | Unknown

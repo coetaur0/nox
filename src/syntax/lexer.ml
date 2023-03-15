@@ -71,10 +71,16 @@ let lex_identifier lexer =
     | "let" -> Token.Let
     | "if" -> Token.If
     | "else" -> Token.Else
+    | "match" -> Token.Match
     | "true" | "false" -> Token.Boolean
     | _ -> Token.Name
   in
   make_token lexer kind
+
+let lex_case lexer =
+  ignore (advance lexer 1);
+  ignore (consume lexer is_alnum);
+  make_token lexer Token.Case
 
 let lex_number lexer =
   ignore (consume lexer is_digit);
@@ -105,6 +111,7 @@ let lex_symbol lexer =
     | (Some '<', Some '=') -> (Token.Le, 2)
     | (Some '>', Some '=') -> (Token.Ge, 2)
     | (Some '.', Some '.') -> (Token.Concat, 2)
+    | (Some '=', Some '>') -> (Token.Arrow, 2)
     | (Some '=', _) -> (Token.Assign, 1)
     | (Some '<', _) -> (Token.Lt, 1)
     | (Some '>', _) -> (Token.Gt, 1)
@@ -141,6 +148,7 @@ let rec next lexer =
     ) else
       lex_symbol lexer
   | Some '"' -> lex_string lexer
+  | Some ':' -> lex_case lexer
   | Some c when is_alpha c -> lex_identifier lexer
   | Some c when is_digit c -> lex_number lexer
   | Some _ -> lex_symbol lexer
