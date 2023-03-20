@@ -189,7 +189,9 @@ and parse_primary parser =
   | Token.LBrace -> parse_block parser
   | Token.LBracket -> parse_record parser
   | Token.If -> parse_if parser
+  | Token.Match -> parse_match parser
   | Token.Lt -> parse_lambda parser
+  | Token.Case -> parse_variant parser
   | Token.Name -> parse_var parser
   | Token.Number -> parse_number parser
   | Token.Boolean -> parse_boolean parser
@@ -201,7 +203,7 @@ and parse_primary parser =
 
 and parse_block parser =
   let left = parser.token.span.left in
-  ignore (consume parser LBrace "expect a '{'");
+  ignore (consume parser Token.LBrace "expect a '{'");
   let stmts = parse_list parser parse_stmt Token.Semicolon [Token.RBrace] in
   let right =
     match consume parser Token.RBrace "expect a '}'" with
@@ -257,6 +259,42 @@ and parse_if parser =
   in
   Ast.{value = If (cond, thn, els); span = Source.merge start els.span}
 
+and parse_match parser =
+  let parse_arm parser =
+    let case =
+      match consume parser Token.Case "expect a variant case name" with
+      | Some case -> Source.read parser.source case.span
+      | None -> ""
+    in
+    let variable =
+      match consume parser Token.Name "expect a variable name" with
+      | Some name -> Source.read parser.source name.span
+      | None -> ""
+    in
+    ignore (consume parser Token.Arrow "expect a '=>'");
+    let body = parse_expr parser in
+    (case, variable, body)
+  in
+  let start = (advance parser).span in
+  let expr = parse_expr parser in
+  ignore (consume parser Token.LBrace "expect a '{'");
+  let arms = parse_list parser parse_arm Token.Comma [Token.Name; Token.RBrace] in
+  let default =
+    match parser.token.kind with
+    | Token.Name ->
+      let variable = Source.read parser.source (advance parser).span in
+      ignore (consume parser Token.Arrow "expect a '=>'");
+      let body = parse_expr parser in
+      Some (variable, body)
+    | _ -> None
+  in
+  let span_end =
+    match consume parser Token.RBrace "expect a '}'" with
+    | Some token -> token.span
+    | None -> parser.token.span
+  in
+  Ast.{value = Match (expr, arms, default); span = Source.merge start span_end}
+
 and parse_lambda parser =
   let start = (advance parser).span in
   let params = parse_list parser (parse_name "expect a parameter name") Token.Comma [Token.Gt] in
@@ -264,6 +302,12 @@ and parse_lambda parser =
   ignore (consume parser Token.Gt "expect a '>'");
   let body = parse_block parser in
   Ast.{value = Lambda (params, body); span = Source.merge start body.span}
+
+and parse_variant parser =
+  let start = (advance parser).span in
+  let case = Source.read parser.source start in
+  let value = parse_expr parser in
+  Ast.{value = Variant (case, value); span = Source.merge start value.span}
 
 and parse_var parser =
   let span = (advance parser).span in

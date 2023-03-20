@@ -75,6 +75,7 @@ and eval_expr env node =
   | Ast.EmptyRecord -> Values.Record Environment.empty
   | Ast.Unit -> Values.Unit
   | Ast.Invalid -> failwith "Invalid expression"
+  | _ -> failwith "TODO: implement the evaluation of polymorphic variants"
 
 and eval_binary env op lhs rhs =
   let left_value = eval_expr env lhs in

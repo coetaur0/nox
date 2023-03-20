@@ -67,6 +67,17 @@ and ast_expr_repr expr =
   | Ast.Block stmts -> Printf.sprintf "{%s}" (ast_repr stmts)
   | Ast.If (cond, thn, els) ->
     Printf.sprintf "if %s %s else %s" (ast_expr_repr cond) (ast_expr_repr thn) (ast_expr_repr els)
+  | Ast.Match (expr, arms, default) ->
+    let default_repr =
+      match default with
+      | Some (var, body) -> Printf.sprintf "%s => %s" var (ast_expr_repr body)
+      | None -> ""
+    in
+    Printf.sprintf "match %s { %s, %s }" (ast_expr_repr expr)
+      (list_repr arms
+         (fun (case, var, body) -> Printf.sprintf "%s %s => %s" case var (ast_expr_repr body))
+         ", " )
+      default_repr
   | Ast.App (callee, args) ->
     Printf.sprintf "%s(%s)" (ast_expr_repr callee) (list_repr args ast_expr_repr ", ")
   | Ast.Record (fields, record) ->
@@ -77,6 +88,7 @@ and ast_expr_repr expr =
     in
     Printf.sprintf "[%s | %s]" fields_repr (ast_expr_repr record)
   | Ast.Select (record, field) -> Printf.sprintf "%s.%s" (ast_expr_repr record) field.value
+  | Ast.Variant (case, value) -> Printf.sprintf "%s %s" case (ast_expr_repr value)
   | Ast.Lambda (params, body) ->
     Printf.sprintf "<%s> %s" (list_repr params (fun p -> p) ", ") (ast_expr_repr body)
   | Ast.Var x -> x

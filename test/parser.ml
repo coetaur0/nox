@@ -80,6 +80,16 @@ let check_if_expr _ =
 let check_invalid_if_expr _ =
   check_errors "if true {0} else" ["1:17..1:17: expect a '{'."; "1:17..1:17: expect a '}'."]
 
+let check_match_expr _ =
+  check "match v { :Some x => x, :None n => 0 }" "match v { :Some x => x, :None n => 0.,  }";
+  check "match :A () { :A a => true, :B b => true, any => false }"
+    "match :A () { :A a => true, :B b => true, any => false }"
+
+let check_invalid_match_expr _ =
+  check_errors "match x :A a => a, :B b => b}" ["1:9..1:11: expect a '{'."];
+  check_errors "match :A 1 { :A => 1 }" ["1:17..1:19: expect a variable name."];
+  check_errors "match :A 1 { :A a 1 }" ["1:19..1:20: expect a '=>'."]
+
 let check_application_expr _ =
   check "f()" "f()";
   check "f(32, 1)" "f(32., 1.)";
@@ -99,6 +109,12 @@ let check_lambda_expr _ =
 let check_invalid_lamba_expr _ =
   check_errors "<x {x}" ["1:4..1:5: expect a '>'."];
   check_errors "<x> x" ["1:5..1:6: expect a '{'."; "1:6..1:6: expect a '}'."]
+
+let check_variant_expr _ =
+  check ":A true" ":A true";
+  check ":X ()" ":X ()"
+
+let check_invalid_variant_expr _ = check_errors ":A" ["1:3..1:3: expect an expression."]
 
 let check_var_expr _ = check "x" "x"
 
@@ -131,9 +147,13 @@ let tests =
          "Invalid record expressions" >:: check_invalid_record_expr;
          "If expressions" >:: check_if_expr;
          "Invalid if expressions" >:: check_invalid_if_expr;
+         "Match expressions" >:: check_match_expr;
+         "Invalid match expressions" >:: check_invalid_match_expr;
          "Application expressions" >:: check_application_expr;
          "Invalid application expressions" >:: check_invalid_application_expr;
          "Selection expressions" >:: check_select_expr;
+         "Variant expressions" >:: check_variant_expr;
+         "Invalid variant expressions" >:: check_invalid_variant_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Invalid lambda expressions" >:: check_invalid_lamba_expr;
          "Variable expressions" >:: check_var_expr;

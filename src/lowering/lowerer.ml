@@ -125,6 +125,7 @@ and lower_expr env node =
     let tmp = gensym "tmp" in
     ([Ir.Decl tmp; Ir.Assign (Ir.Var tmp, Ir.EmptyRecord)], Ir.Var tmp)
   | Ast.Invalid -> failwith "Unreachable case"
+  | _ -> failwith "TODO: implement lowering for polymorphic variants"
 
 and lower_binary env op lhs rhs =
   let (lhs_stmts, lhs_expr) = lower_expr env lhs in

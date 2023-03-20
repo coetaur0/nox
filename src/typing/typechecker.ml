@@ -269,6 +269,7 @@ and infer_expr env node =
   | Ast.Unit -> Types.Unit
   | Ast.Invalid ->
     raise (TypeError {message = "cannot type an invalid expression"; span = node.span})
+  | _ -> failwith "TODO: implement type checking for polymorphic variants"
 
 and infer_binary env op lhs rhs =
   let lhs_type = infer_expr env lhs in
