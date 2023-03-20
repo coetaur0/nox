@@ -53,6 +53,7 @@ let rec generalise = function
   | Types.Var {contents = Free (x, level)} when level > !current_level -> Types.Generic x
   | Types.Ref ty -> Types.Ref (generalise ty)
   | Types.Record row -> Types.Record (generalise row)
+  | Types.Variant row -> Types.Variant (generalise row)
   | Types.Row (fields, row) -> Types.Row (Environment.map generalise fields, generalise row)
   | _ as ty -> ty
 
@@ -69,6 +70,7 @@ let instantiate ty =
     | Types.Var {contents = Bound ty} -> instantiate' ty
     | Types.Ref ty -> Types.Ref (instantiate' ty)
     | Types.Record row -> Types.Record (instantiate' row)
+    | Types.Variant row -> Types.Variant (instantiate' row)
     | Types.Row (fields, row) -> Types.Row (Environment.map instantiate' fields, instantiate' row)
     | _ as ty -> ty
   in
@@ -80,6 +82,7 @@ let rec merge_fields = function
   | Types.Var {contents = Bound ty} -> merge_fields ty
   | Types.Var _ as var -> (Environment.empty, var)
   | Types.Record row -> merge_fields row
+  | Types.Variant row -> merge_fields row
   | Types.Row (fields, row) -> (
     match merge_fields row with
     | (fields', row') when Environment.is_empty fields' -> (fields, row')
@@ -101,6 +104,7 @@ let rec occurs typevar = function
     false
   | Types.Ref ty -> occurs typevar ty
   | Types.Record row -> occurs typevar row
+  | Types.Variant row -> occurs typevar row
   | Types.Row (fields, row) ->
     Environment.exists (fun _ ty -> occurs typevar ty) fields || occurs typevar row
   | _ -> false
@@ -122,7 +126,9 @@ let rec unify span lhs rhs =
       else
         typevar := Bound ty
     | (Types.Ref lhs_ty, Types.Ref rhs_ty) -> unify span lhs_ty rhs_ty
-    | (Types.Record lhs_row, Types.Record rhs_row) -> unify span lhs_row rhs_row
+    | (Types.Record lhs_row, Types.Record rhs_row) | (Types.Variant lhs_row, Types.Variant rhs_row)
+      ->
+      unify span lhs_row rhs_row
     | ((Types.Row _ as lhs_row), (Types.Row _ as rhs_row)) -> unify_rows span lhs_row rhs_row
     | (Types.Row (fields, _), Types.EmptyRow) | (Types.EmptyRow, Types.Row (fields, _)) ->
       let (label, _) = Environment.choose fields in
@@ -254,9 +260,11 @@ and infer_expr env node =
     let (_, ty) = infer_stmts env stmts in
     ty
   | Ast.If (cond, thn, els) -> infer_if env cond thn els
+  | Ast.Match (expr, arms, default) -> infer_match env expr arms default
   | Ast.App (callee, args) -> infer_app env callee args
   | Ast.Record (fields, record) -> infer_record env fields record
   | Ast.Select (path, field) -> infer_select env path field
+  | Ast.Variant (case, value) -> infer_variant env case value
   | Ast.Lambda (params, body) -> infer_lambda env params body
   | Ast.Var x -> (
     try instantiate (Environment.find x env)
@@ -269,7 +277,6 @@ and infer_expr env node =
   | Ast.Unit -> Types.Unit
   | Ast.Invalid ->
     raise (TypeError {message = "cannot type an invalid expression"; span = node.span})
-  | _ -> failwith "TODO: implement type checking for polymorphic variants"
 
 and infer_binary env op lhs rhs =
   let lhs_type = infer_expr env lhs in
@@ -310,6 +317,36 @@ and infer_if env cond thn els =
   unify Ast.(thn.span) els_type thn_type;
   thn_type
 
+and infer_match env expr arms default =
+  let rec infer_arms env match_type row_type arms =
+    match arms with
+    | (case, variable, body) :: rest ->
+      let case_type = new_var !current_level in
+      unify Ast.(body.span) match_type (infer_expr (Environment.add variable case_type env) body);
+      let rest_types = infer_arms env match_type row_type rest in
+      Types.Row (Environment.singleton case case_type, rest_types)
+    | [] -> row_type
+  in
+  let (match_type, default_type) =
+    match default with
+    | Some (variable, body) ->
+      let default_type = new_var !current_level in
+      let match_type =
+        infer_expr (Environment.add variable (Types.Variant default_type) env) body
+      in
+      (match_type, default_type)
+    | None -> (new_var !current_level, Types.EmptyRow)
+  in
+  let expr_type = infer_expr env expr in
+  let row_type = infer_arms env match_type default_type arms in
+  let span =
+    match expr.value with
+    | Ast.Variant (_, value) -> value.span
+    | _ -> expr.span
+  in
+  unify span (Types.Variant row_type) expr_type;
+  match_type
+
 and infer_app env callee args =
   let callee_type = infer_expr env callee in
   let n_args = List.length args in
@@ -338,19 +375,26 @@ and infer_app env callee args =
   return_type
 
 and infer_record env fields record =
-  let row_ty = new_var !current_level in
-  unify record.span (Types.Record row_ty) (infer_expr env record);
-  let fields_ty = Environment.map (infer_expr env) fields in
-  let (fields_ty', row_ty') = merge_fields (Types.Row (fields_ty, row_ty)) in
-  Types.Record (Types.Row (fields_ty', row_ty'))
+  let row_type = new_var !current_level in
+  unify record.span (Types.Record row_type) (infer_expr env record);
+  let fields_types = Environment.map (infer_expr env) fields in
+  let (fields_types', row_type') = merge_fields (Types.Row (fields_types, row_type)) in
+  Types.Record (Types.Row (fields_types', row_type'))
 
 and infer_select env path field =
-  let row_ty = new_var !current_level in
-  let field_ty = new_var !current_level in
+  let row_type = new_var !current_level in
+  let field_type = new_var !current_level in
   unify field.span
-    (Types.Record (Types.Row (Environment.singleton field.value field_ty, row_ty)))
+    (Types.Record (Types.Row (Environment.singleton field.value field_type, row_type)))
     (infer_expr env path);
-  field_ty
+  field_type
+
+and infer_variant env case value =
+  let row_type = new_var !current_level in
+  let case_type = new_var !current_level in
+  let variant_type = Types.Variant (Types.Row (Environment.singleton case case_type, row_type)) in
+  unify value.span case_type (infer_expr env value);
+  variant_type
 
 and infer_lambda env params body =
   let param_types = List.map (fun _ -> new_var !current_level) params in

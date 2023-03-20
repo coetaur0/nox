@@ -97,6 +97,16 @@ let check_invalid_if_expr _ =
     "1:4..1:6: expect a value of type boolean, but found a number value.";
   check_error "if true {5}" "1:9..1:12: expect a value of type unit, but found a number value."
 
+let check_match_expr _ =
+  check "match :A 42 { :A a => a, :B b => b }" "number";
+  check "match :Some true { :Some b => b, default => match default { :None n => false } }" "boolean"
+
+let check_invalid_match_expr _ =
+  check_error "match :Num 10 { :Num n => n, :Bool b => false }"
+    "1:12..1:14: expect a value of type boolean, but found a number value.";
+  check_error "match :A 42 { :A a => a, z => false }"
+    "1:10..1:12: expect a value of type boolean, but found a number value."
+
 let check_application_expr _ = check "fun f(x, y) {x + y}; f(1, 2)" "number"
 
 let check_invalid_application_expr _ =
@@ -116,6 +126,10 @@ let check_select_expr _ =
 
 let check_invalid_select_expr _ =
   check_error "[a = true].b" "1:12..1:13: type doesn't contain label 'b'."
+
+let check_variant_expr _ =
+  check ":A 42" "<:A : number | 'a>";
+  check ":Some \"string\"" "<:Some : string | 'a>"
 
 let check_lambda_expr _ =
   check "<x> {x}" "('a) -> 'a";
@@ -152,11 +166,14 @@ let tests =
          "Invalid unary expressions" >:: check_invalid_unary_expr;
          "If expressions" >:: check_if_expr;
          "Invalid if expressions" >:: check_invalid_if_expr;
+         "Match expressions" >:: check_match_expr;
+         "Invalid match expressions" >:: check_invalid_match_expr;
          "Application expressions" >:: check_application_expr;
          "Invalid application expressions" >:: check_invalid_application_expr;
          "Record expressions" >:: check_record_expr;
          "Select expressions" >:: check_select_expr;
          "Invalid select expressions" >:: check_invalid_select_expr;
+         "Variant expressions" >:: check_variant_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;

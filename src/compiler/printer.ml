@@ -110,6 +110,7 @@ let rec type_repr ty =
   | Types.Var {contents = Free (x, _)} -> x
   | Types.Ref ty' -> Printf.sprintf "&%s" (type_repr ty')
   | Types.Record row -> Printf.sprintf "[%s]" (type_repr row)
+  | Types.Variant row -> Printf.sprintf "<%s>" (type_repr row)
   | Types.Row (fields, row) -> (
     let fields_repr =
       list_repr (Environment.bindings fields)

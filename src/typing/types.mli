@@ -10,6 +10,7 @@ type t =
   | Var of var ref
   | Ref of t
   | Record of t
+  | Variant of t
   | Number
   | Boolean
   | String
