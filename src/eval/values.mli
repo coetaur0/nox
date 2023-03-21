@@ -9,6 +9,7 @@ and t =
   | NativeFun of (t list -> t)
   | Ref of t ref
   | Record of t Environment.t
+  | Variant of string * t
   | Number of float
   | Boolean of bool
   | String of string

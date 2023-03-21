@@ -138,6 +138,7 @@ let rec value_repr = function
       (list_repr fields
          (fun (name, value) -> Printf.sprintf "%s = %s" name (value_repr value))
          ", " )
+  | Values.Variant (case, value) -> Printf.sprintf "%s %s" case (value_repr value)
   | Values.Number num -> string_of_float num
   | Values.Boolean bool -> string_of_bool bool
   | Values.String string -> Printf.sprintf "\"%s\"" string

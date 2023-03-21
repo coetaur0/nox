@@ -57,6 +57,7 @@ and eval_expr env node =
   | Ast.Unary (op, operand) -> eval_unary env op operand
   | Ast.Block stmts -> eval_block env stmts
   | Ast.If (cond, thn, els) -> eval_if env cond thn els
+  | Ast.Match (expr, arms, default) -> eval_match env expr arms default
   | Ast.App (callee, args) -> eval_app env callee args
   | Ast.Record (fields, record) -> (
     let fields' = Environment.map (eval_expr env) fields in
@@ -67,6 +68,7 @@ and eval_expr env node =
     match eval_expr env expr with
     | Values.Record record -> Environment.find field.value record
     | _ -> failwith "expect a record" )
+  | Ast.Variant (case, value) -> Values.Variant (case, eval_expr env value)
   | Ast.Lambda (params, body) -> Values.Closure (ref env, params, body)
   | Ast.Var x -> Environment.find x env
   | Ast.Number num -> Values.Number num
@@ -75,7 +77,6 @@ and eval_expr env node =
   | Ast.EmptyRecord -> Values.Record Environment.empty
   | Ast.Unit -> Values.Unit
   | Ast.Invalid -> failwith "Invalid expression"
-  | _ -> failwith "TODO: implement the evaluation of polymorphic variants"
 
 and eval_binary env op lhs rhs =
   let left_value = eval_expr env lhs in
@@ -115,6 +116,20 @@ and eval_if env cond thn els =
   | Values.Boolean true -> eval_expr env thn
   | Values.Boolean false -> eval_expr env els
   | _ -> failwith "Invalid condition"
+
+and eval_match env expr arms default =
+  let (case, value) =
+    match eval_expr env expr with
+    | Values.Variant (case, value) -> (case, value)
+    | _ -> failwith "Invalid match expression"
+  in
+  match List.find_opt (fun (arm_case, _, _) -> case = arm_case) arms with
+  | Some (_, variable, body) -> eval_expr (Environment.add variable value env) body
+  | None -> (
+    match default with
+    | Some (variable, body) ->
+      eval_expr (Environment.add variable (Values.Variant (case, value)) env) body
+    | None -> failwith "No case matching the input expression" )
 
 and eval_app env callee args =
   let callee_value = eval_expr env callee in

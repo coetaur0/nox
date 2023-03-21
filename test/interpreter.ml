@@ -52,6 +52,10 @@ let check_if_expr _ =
   check "if 10 > 100 {true} else if -10 > -11 {false} else {true}" "false";
   check "if true {}" "()"
 
+let check_match_expr _ =
+  check "match :A 42 { :A a => 2 * a, _ => 0 }" "84.";
+  check "match :None () { :Some b => b, _ => false }" "false"
+
 let check_application_expr _ =
   check "fun f(x, y) {x + y}; f(1, 2)" "3.";
   check "fun mkref(x) { &x }; mkref(3)" "&3.";
@@ -63,6 +67,8 @@ let check_record_expr _ =
   check "[]" "[]"
 
 let check_select_expr _ = check "[a = 32, b = ()].a" "32."
+
+let check_variant_expr _ = check ":A 42" ":A 42."
 
 let check_lambda_expr _ =
   check "<x> {x}" "<closure>";
@@ -92,9 +98,11 @@ let tests =
          "Binary expressions" >:: check_binary_expr;
          "Unary expressions" >:: check_unary_expr;
          "If expressions" >:: check_if_expr;
+         "Match expressions" >:: check_match_expr;
          "Application expressions" >:: check_application_expr;
          "Record expressions" >:: check_record_expr;
          "Select expressions" >:: check_select_expr;
+         "Variant expressions" >:: check_variant_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;
