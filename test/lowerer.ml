@@ -62,6 +62,12 @@ let check_if_expr _ =
   check "let n = 1; if n < 1 {-1} else if n == 1 {0} else {1}"
     "let n0; n0 = 1.; if (n0 < 1.) {return -1.} else {if (n0 == 1.) {return 0.} else {return 1.}}"
 
+let check_match_expr _ =
+  check "match :A 42 {:A a => 2 * a, :B b => b - 3, def => 0}"
+    "let tmp0; tmp0 = []; tmp0.case = \":A\"; tmp0.value = 42.; if (tmp0.case == \":A\") {let a2; \
+     a2 = tmp0.value; return (2. * a2)} else {if (tmp0.case == \":B\") {let b3; b3 = tmp0.value; \
+     return (b3 - 3.)} else {let def; def1 = tmp0.value; return 0.}}"
+
 let check_application_expr _ =
   check "fun f(x) {x + 1}; f(2)" "fun f0(x1) {return (x1 + 1.)}; return f0(2.)";
   check "<x> {x * 2}(3)" "return <x0> {return (x0 * 2.)}(3.)"
@@ -80,6 +86,9 @@ let check_record_expr _ =
 
 let check_select_expr _ =
   check "[a = 42, b = true].b" "let tmp0; tmp0 = []; tmp0.a = 42.; tmp0.b = true; return tmp0.b"
+
+let check_variant_expr _ =
+  check ":A true" "let tmp0; tmp0 = []; tmp0.case = \":A\"; tmp0.value = true; return tmp0"
 
 let check_lambda_expr _ = check "<x, y> {x + y}" "return <x0, y1> {return (x0 + y1)}"
 
@@ -107,9 +116,11 @@ let tests =
          "Unary expressions" >:: check_unary_expr;
          "Block expressions" >:: check_block_expr;
          "If expressions" >:: check_if_expr;
+         "Match expressions" >:: check_match_expr;
          "Application expressions" >:: check_application_expr;
          "Record expressions" >:: check_record_expr;
          "Select expressions" >:: check_select_expr;
+         "Variant expressions" >:: check_variant_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;

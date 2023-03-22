@@ -51,7 +51,7 @@ and lower_stmt env node =
   | Ast.Fun funs -> lower_funs env funs
   | Ast.Let (name, value) -> lower_let env name value
   | Ast.Update (lhs, rhs) -> lower_update env lhs rhs
-  | Ast.Expr expr -> (env, assign env (Ir.Var "_") Ast.{value = expr; span = node.span})
+  | Ast.Expr expr -> (env, assign (Ir.Var "_") env Ast.{value = expr; span = node.span})
 
 and lower_funs env funs =
   let env' =
@@ -67,32 +67,23 @@ and lower_fun env name params body =
 and return env node =
   match Ast.(node.value) with
   | Ast.Block stmts -> lower_stmts env stmts
-  | Ast.If (cond, thn, els) ->
-    let (ir_stmts, ir_expr) = lower_expr env cond in
-    ir_stmts @ [Ir.If (ir_expr, return env thn, return env els)]
+  | Ast.If (cond, thn, els) -> lower_if env cond thn els return
+  | Ast.Match (expr, arms, default) -> lower_match env expr arms default return
   | _ ->
     let (ir_stmts, ir_expr) = lower_expr env node in
     ir_stmts @ [Ir.Return ir_expr]
 
 and lower_let env name value =
   let (env', name') = mangle env name in
-  (env', [Ir.Decl name'] @ assign env' (Ir.Var name') value)
+  (env', [Ir.Decl name'] @ assign (Ir.Var name') env' value)
 
-and assign env lhs rhs =
-  let rec assign_stmts env lhs = function
-    | [Ast.{value = Expr expr; span}] ->
-      let (rhs_stmts, rhs_expr) = lower_expr env Ast.{value = expr; span} in
-      rhs_stmts @ [Ir.Assign (lhs, rhs_expr)]
-    | stmt :: rest ->
-      let (env', ir_stmts) = lower_stmt env stmt in
-      ir_stmts @ assign_stmts env' lhs rest
-    | [] -> [Ir.Assign (lhs, Ir.Unit)]
-  in
+and assign lhs env rhs =
   match Ast.(rhs.value) with
-  | Ast.Block stmts -> assign_stmts env lhs stmts
-  | Ast.If (cond, thn, els) ->
-    let (cond_stmts, cond_expr) = lower_expr env cond in
-    cond_stmts @ [Ir.If (cond_expr, assign env lhs thn, assign env lhs els)]
+  | Ast.Block stmts ->
+    let (block_stmts, block_expr) = lower_block env stmts in
+    block_stmts @ [Ir.Assign (lhs, block_expr)]
+  | Ast.If (cond, thn, els) -> lower_if env cond thn els (assign lhs)
+  | Ast.Match (expr, arms, default) -> lower_match env expr arms default (assign lhs)
   | _ ->
     let (rhs_stmts, rhs_expr) = lower_expr env rhs in
     rhs_stmts @ [Ir.Assign (lhs, rhs_expr)]
@@ -106,15 +97,20 @@ and lower_expr env node =
   match Ast.(node.value) with
   | Ast.Binary (op, lhs, rhs) -> lower_binary env op lhs rhs
   | Ast.Unary (op, operand) -> lower_unary env op operand
-  | Ast.Block _ | Ast.If _ ->
+  | Ast.Block _ | Ast.If _ | Ast.Match _ ->
     let tmp = gensym "tmp" in
-    let ir_stmts = assign env (Ir.Var tmp) node in
+    let ir_stmts = assign (Ir.Var tmp) env node in
     ([Ir.Decl tmp] @ ir_stmts, Ir.Var tmp)
   | Ast.App (callee, args) -> lower_app env callee args
   | Ast.Record (fields, record) -> lower_record env fields record
   | Ast.Select (record, field) ->
     let (record_stmts, record_expr) = lower_expr env record in
     (record_stmts, Ir.Select (record_expr, field.value))
+  | Ast.Variant (case, value) ->
+    let case_field = Ast.{value = String case; span = node.span} in
+    lower_record env
+      (Environment.of_list [("case", case_field); ("value", value)])
+      Ast.{value = EmptyRecord; span = node.span}
   | Ast.Lambda (params, body) -> lower_lambda env params body
   | Ast.Var x -> ([], Ir.Var (Environment.find x env))
   | Ast.Number num -> ([], Ir.Number num)
@@ -125,7 +121,6 @@ and lower_expr env node =
     let tmp = gensym "tmp" in
     ([Ir.Decl tmp; Ir.Assign (Ir.Var tmp, Ir.EmptyRecord)], Ir.Var tmp)
   | Ast.Invalid -> failwith "Unreachable case"
-  | _ -> failwith "TODO: implement lowering for polymorphic variants"
 
 and lower_binary env op lhs rhs =
   let (lhs_stmts, lhs_expr) = lower_expr env lhs in
@@ -135,6 +130,40 @@ and lower_binary env op lhs rhs =
 and lower_unary env op operand =
   let (ir_stmts, ir_expr) = lower_expr env operand in
   (ir_stmts, Ir.Unary (op, ir_expr))
+
+and lower_block env = function
+  | [Ast.{value = Expr expr; span}] -> lower_expr env Ast.{value = expr; span}
+  | stmt :: rest ->
+    let (env', ir_stmts) = lower_stmt env stmt in
+    let (rest_stmts, rest_expr) = lower_block env' rest in
+    (ir_stmts @ rest_stmts, rest_expr)
+  | [] -> ([], Ir.Unit)
+
+and lower_if env cond thn els fn =
+  let (cond_stmts, cond_expr) = lower_expr env cond in
+  cond_stmts @ [Ir.If (cond_expr, fn env thn, fn env els)]
+
+and lower_match env expr arms default fn =
+  let (expr_stmts, expr_expr) = lower_expr env expr in
+  let case_expr = Ir.Select (expr_expr, "case") in
+  let value_expr = Ir.Select (expr_expr, "value") in
+  let default_stmts =
+    match default with
+    | Some (variable, body) ->
+      let (env', variable') = mangle env variable in
+      [Ir.Decl variable; Ir.Assign (Ir.Var variable', value_expr)] @ fn env' body
+    | None -> []
+  in
+  let rec lower_arms = function
+    | (case, variable, body) :: rest ->
+      let (env', variable') = mangle env variable in
+      [ Ir.If
+          ( Ir.Binary (Ast.Eq, case_expr, Ir.String case),
+            [Ir.Decl variable'; Ir.Assign (Ir.Var variable', value_expr)] @ fn env' body,
+            lower_arms rest ) ]
+    | [] -> default_stmts
+  in
+  expr_stmts @ lower_arms arms
 
 and lower_app env callee args =
   let (callee_stmts, callee_expr) = lower_expr env callee in

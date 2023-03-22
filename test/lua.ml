@@ -115,6 +115,28 @@ let check_if_expr _ =
     \  end\n\
      end"
 
+let check_match_expr _ =
+  check "match :B 42 { :A a => a / 2, :B b => b * 2, default => 0}"
+    "local tmp0\n\
+     tmp0 = {}\n\
+     tmp0.case = \":B\"\n\
+     tmp0.value = 42.\n\
+     if (tmp0.case == \":A\") then\n\
+    \  local a2\n\
+    \  a2 = tmp0.value\n\
+    \  return (a2 / 2.)\n\
+     else\n\
+    \  if (tmp0.case == \":B\") then\n\
+    \    local b3\n\
+    \    b3 = tmp0.value\n\
+    \    return (b3 * 2.)\n\
+    \  else\n\
+    \    local default\n\
+    \    default1 = tmp0.value\n\
+    \    return 0.\n\
+    \  end\n\
+     end"
+
 let check_application_expr _ =
   check "fun f(x) {x + 1}; f(2)"
     "local f0\nf0 = function(x1)\n  return (x1 + 1.)\nend\nreturn f0(2.)"
@@ -138,6 +160,9 @@ let check_record_expr _ =
      return nil"
 
 let check_select_expr _ = check "[a = 42].a" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\nreturn tmp0.a"
+
+let check_variant_expr _ =
+  check ":A ()" "local tmp0\ntmp0 = {}\ntmp0.case = \":A\"\ntmp0.value = nil\nreturn tmp0"
 
 let check_lambda_expr _ = check "<x, y> {x + y}" "return function(x0, y1)\n  return (x0 + y1)\nend"
 
@@ -167,9 +192,11 @@ let tests =
          "Unary expressions" >:: check_unary_expr;
          "Block expressions" >:: check_block_expr;
          "If expressions" >:: check_if_expr;
+         "Match expressions" >:: check_match_expr;
          "Application expressions" >:: check_application_expr;
          "Record expressions" >:: check_record_expr;
          "Select expressions" >:: check_select_expr;
+         "Variant expressions" >:: check_variant_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;
