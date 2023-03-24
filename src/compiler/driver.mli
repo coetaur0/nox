@@ -3,9 +3,9 @@
 (** [run_repl ()] runs the interactive interpreter (REPL). *)
 val run_repl : unit -> unit
 
-(** [interpret path] runs the interpreter on a file at some [path]. *)
-val interpret : string -> unit
+(** [interpret files] runs the interpreter on a sequence of modules in a list of [files]. *)
+val interpret : string list -> unit
 
-(** [compile path] compiles the contents of a file at some [path] and writes the result in a new Lua
-    file with the same name. *)
-val compile : string -> unit
+(** [compile files directory] compiles the modules stored in a list of [files] and writes the
+    resulting Lua modules in '.lua' files with the same name, in some output [directory]. *)
+val compile : string list -> string -> unit

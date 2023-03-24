@@ -50,6 +50,7 @@ and expr =
   | Select of expr node * name node
   | Variant of name * expr node
   | Lambda of name list * expr node
+  | Open of name
   | Var of name
   | Number of float
   | Boolean of bool

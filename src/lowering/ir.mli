@@ -16,6 +16,7 @@ and expr =
   | App of expr * expr list
   | Select of expr * Ast.name
   | Lambda of Ast.name list * stmt list
+  | Open of Ast.name
   | Var of Ast.name
   | Number of float
   | Boolean of bool

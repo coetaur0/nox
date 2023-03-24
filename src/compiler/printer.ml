@@ -91,6 +91,7 @@ and ast_expr_repr expr =
   | Ast.Variant (case, value) -> Printf.sprintf "%s %s" case (ast_expr_repr value)
   | Ast.Lambda (params, body) ->
     Printf.sprintf "<%s> %s" (list_repr params (fun p -> p) ", ") (ast_expr_repr body)
+  | Ast.Open name -> Printf.sprintf "open %s" name
   | Ast.Var x -> x
   | Ast.Number num -> string_of_float num
   | Ast.Boolean bool -> string_of_bool bool
@@ -170,6 +171,7 @@ and ir_expr_repr = function
   | Ir.Select (record, field) -> Printf.sprintf "%s.%s" (ir_expr_repr record) field
   | Ir.Lambda (params, body) ->
     Printf.sprintf "<%s> {%s}" (list_repr params (fun p -> p) ", ") (ir_repr body)
+  | Ir.Open name -> Printf.sprintf "open %s" name
   | Ir.Var x -> x
   | Ir.Number num -> string_of_float num
   | Ir.Boolean bool -> string_of_bool bool

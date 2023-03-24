@@ -1,19 +1,25 @@
 open Nox
 
-let usage_message = "nox [-emit-lua] <file>"
+let usage_message = "nox [-compile] [<file1>] [<file2>] ... [-output <directory>]"
 
-let emit_lua = ref false
+let compile = ref false
 
-let filepath = ref ""
+let output = ref ""
 
-let anon_fun path = if !filepath = "" then filepath := path
+let files = ref []
 
-let speclist = [("-emit-lua", Arg.Set emit_lua, "Emit Lua source code")]
+let anon_fun file = files := file :: !files
+
+let speclist =
+  [ ("-compile", Arg.Set compile, "Compile to Lua source code");
+    ("-output", Arg.Set_string output, "Output directory for compilation") ]
 
 let () =
   Arg.parse speclist anon_fun usage_message;
-  match (!emit_lua, !filepath) with
-  | (true, "") -> prerr_endline "Error: expect a .nox file to compile as argument."
-  | (false, "") -> Driver.run_repl ()
-  | (true, _) -> Driver.compile !filepath
-  | (false, _) -> Driver.interpret !filepath
+  match (!compile, !files) with
+  | (false, []) -> Driver.run_repl ()
+  | (false, _) -> Driver.interpret (List.rev !files)
+  | (true, _) -> (
+    match !output with
+    | "" -> print_endline "Please specify an output directory for compilation"
+    | _ -> Driver.compile (List.rev !files) !output )

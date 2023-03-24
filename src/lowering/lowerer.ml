@@ -112,6 +112,7 @@ and lower_expr env node =
       (Environment.of_list [("case", case_field); ("value", value)])
       Ast.{value = EmptyRecord; span = node.span}
   | Ast.Lambda (params, body) -> lower_lambda env params body
+  | Ast.Open name -> ([], Ir.Open name)
   | Ast.Var x -> ([], Ir.Var (Environment.find x env))
   | Ast.Number num -> ([], Ir.Number num)
   | Ast.Boolean bool -> ([], Ir.Boolean bool)

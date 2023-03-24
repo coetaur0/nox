@@ -22,8 +22,9 @@ let check string tokens =
 let check_comments _ = check "// This is a comment\n// And another one" [(Token.Eof, "")]
 
 let check_keywords _ =
-  check "fun let if else match"
-    [ (Token.Fun, "fun");
+  check "open fun let if else match"
+    [ (Token.Open, "open");
+      (Token.Fun, "fun");
       (Token.Let, "let");
       (Token.If, "if");
       (Token.Else, "else");

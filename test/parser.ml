@@ -116,6 +116,11 @@ let check_variant_expr _ =
 
 let check_invalid_variant_expr _ = check_errors ":A" ["1:3..1:3: expect an expression."]
 
+let check_open_expr _ = check "open \"module\"" "open \"module\""
+
+let check_invalid_open_expr _ =
+  check_errors "open module" ["1:6..1:12: expect a module name between \"."]
+
 let check_var_expr _ = check "x" "x"
 
 let check_number_expr _ = check "1337.7331" "1337.7331"
@@ -154,6 +159,8 @@ let tests =
          "Selection expressions" >:: check_select_expr;
          "Variant expressions" >:: check_variant_expr;
          "Invalid variant expressions" >:: check_invalid_variant_expr;
+         "Open expressions" >:: check_open_expr;
+         "Invalid open expressions" >:: check_invalid_open_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Invalid lambda expressions" >:: check_invalid_lamba_expr;
          "Variable expressions" >:: check_var_expr;

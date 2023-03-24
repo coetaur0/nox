@@ -192,6 +192,7 @@ and parse_primary parser =
   | Token.Match -> parse_match parser
   | Token.Lt -> parse_lambda parser
   | Token.Case -> parse_variant parser
+  | Token.Open -> parse_open parser
   | Token.Name -> parse_var parser
   | Token.Number -> parse_number parser
   | Token.Boolean -> parse_boolean parser
@@ -308,6 +309,15 @@ and parse_variant parser =
   let case = Source.read parser.source start in
   let value = parse_expr parser in
   Ast.{value = Variant (case, value); span = Source.merge start value.span}
+
+and parse_open parser =
+  ignore (advance parser);
+  let (name, span) =
+    match consume parser Token.String "expect a module name between \"" with
+    | Some token -> (Source.read parser.source token.span, token.span)
+    | None -> ("", parser.token.span)
+  in
+  Ast.{value = Open name; span}
 
 and parse_var parser =
   let span = (advance parser).span in

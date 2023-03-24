@@ -74,6 +74,7 @@ and emit_expr level = function
       (Printer.list_repr params (fun p -> p) ", ")
       (emit_stmts (level + 1) body)
       (indent level)
+  | Ir.Open name -> Printf.sprintf "require(%s)" name
   | Ir.Var x -> x
   | Ir.Number num -> string_of_float num
   | Ir.Boolean bool -> string_of_bool bool

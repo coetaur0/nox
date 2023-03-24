@@ -70,6 +70,7 @@ and eval_expr env node =
     | _ -> failwith "expect a record" )
   | Ast.Variant (case, value) -> Values.Variant (case, eval_expr env value)
   | Ast.Lambda (params, body) -> Values.Closure (ref env, params, body)
+  | Ast.Open name -> Environment.find name env
   | Ast.Var x -> Environment.find x env
   | Ast.Number num -> Values.Number num
   | Ast.Boolean bool -> Values.Boolean bool

@@ -7,6 +7,7 @@ type lexeme =
   | String
   | Name
   | Case
+  | Open
   | Fun
   | Let
   | If

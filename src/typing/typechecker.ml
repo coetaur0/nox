@@ -266,6 +266,10 @@ and infer_expr env node =
   | Ast.Select (path, field) -> infer_select env path field
   | Ast.Variant (case, value) -> infer_variant env case value
   | Ast.Lambda (params, body) -> infer_lambda env params body
+  | Ast.Open name -> (
+    try Environment.find name env
+    with Not_found ->
+      raise (TypeError {message = Printf.sprintf "unknown module %s" name; span = node.span}) )
   | Ast.Var x -> (
     try instantiate (Environment.find x env)
     with Not_found ->
