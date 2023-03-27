@@ -6,6 +6,7 @@ type stmt =
   | Decl of Ast.name
   | Assign of expr * expr
   | CopyRecord of Ast.name * expr
+  | While of expr * stmt list
   | If of expr * stmt list * stmt list
   | Return of expr
 

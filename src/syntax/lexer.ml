@@ -70,6 +70,7 @@ let lex_identifier lexer =
     | "open" -> Token.Open
     | "fun" -> Token.Fun
     | "let" -> Token.Let
+    | "while" -> Token.While
     | "if" -> Token.If
     | "else" -> Token.Else
     | "match" -> Token.Match

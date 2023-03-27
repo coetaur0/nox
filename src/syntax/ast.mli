@@ -36,6 +36,7 @@ type stmt =
   | Fun of (name * name list * expr node) list
   | Let of name * expr node
   | Update of expr node * expr node
+  | While of expr node * expr node
   | Expr of expr
 
 (** An AST expression. *)

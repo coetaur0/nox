@@ -51,6 +51,7 @@ and lower_stmt env node =
   | Ast.Fun funs -> lower_funs env funs
   | Ast.Let (name, value) -> lower_let env name value
   | Ast.Update (lhs, rhs) -> lower_update env lhs rhs
+  | Ast.While (cond, body) -> lower_while env cond body
   | Ast.Expr expr -> (env, assign (Ir.Var "_") env Ast.{value = expr; span = node.span})
 
 and lower_funs env funs =
@@ -92,6 +93,22 @@ and lower_update env lhs rhs =
   let (lhs_stmts, lhs_expr) = lower_expr env lhs in
   let (rhs_stmts, rhs_expr) = lower_expr env rhs in
   (env, lhs_stmts @ rhs_stmts @ [Ir.Assign (Ir.Unary (Ast.Deref, lhs_expr), rhs_expr)])
+
+and lower_while env cond body =
+  let stmts =
+    match body.value with
+    | Ast.Block stmts -> stmts
+    | _ -> failwith "Unreachable arm"
+  in
+  let (cond_stmts, cond_expr) = lower_expr env cond in
+  let (_, body_stmts) =
+    List.fold_left
+      (fun (env, body_stmts) stmt ->
+        let (env', ir_stmts) = lower_stmt env stmt in
+        (env', ir_stmts @ body_stmts) )
+      (env, []) stmts
+  in
+  (env, cond_stmts @ [Ir.While (cond_expr, body_stmts)])
 
 and lower_expr env node =
   match Ast.(node.value) with

@@ -10,6 +10,7 @@ type lexeme =
   | Open
   | Fun
   | Let
+  | While
   | If
   | Else
   | Match

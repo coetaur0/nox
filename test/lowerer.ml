@@ -44,6 +44,10 @@ let check_var _ =
 let check_update _ =
   check "let x = &42; x <- @x + 1" "let x0; x0 = &42.; @x0 = (@x0 + 1.); return ()"
 
+let check_while_loop _ =
+  check "let c = &0; while @c < 3 { c <- @c + 1 }"
+    "let c0; c0 = &0.; while (@c0 < 3.) {@c0 = (@c0 + 1.)}; return ()"
+
 let check_binary_expr _ =
   check "55 * 3 + 1 - 2" "return (((55. * 3.) + 1.) - 2.)";
   check "let x = 42; x + 33" "let x0; x0 = 42.; return (x0 + 33.)";
@@ -112,6 +116,7 @@ let tests =
          "Empty functions" >:: check_empty_fn;
          "Variables" >:: check_var;
          "Updates" >:: check_update;
+         "While loops" >:: check_while_loop;
          "Binary expressions" >:: check_binary_expr;
          "Unary expressions" >:: check_unary_expr;
          "Block expressions" >:: check_block_expr;

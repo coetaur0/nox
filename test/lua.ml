@@ -88,6 +88,10 @@ let check_update _ =
   check "let x = &42; x <- @x + 1" "local x0\nx0 = ({42.})\nx0[1] = (x0[1] + 1.)\nreturn nil";
   check "&42 <- 43" "({42.})[1] = 43.\nreturn nil"
 
+let check_while_loop _ =
+  check "let c = &0; while @c < 3 {c <- @c + 1}"
+    "local c0\nc0 = ({0.})\nwhile (c0[1] < 3.) do\n  c0[1] = (c0[1] + 1.)\nend\nreturn nil"
+
 let check_binary_expr _ =
   check "55 * 3 + 1 - 2" "return (((55. * 3.) + 1.) - 2.)";
   check "let x = 42; x + 33" "local x0\nx0 = 42.\nreturn (x0 + 33.)";
@@ -188,6 +192,7 @@ let tests =
          "Variables" >:: check_var;
          "Closure captured variables" >:: check_closure_capture;
          "Updates" >:: check_update;
+         "While loops" >:: check_while_loop;
          "Binary expressions" >:: check_binary_expr;
          "Unary expressions" >:: check_unary_expr;
          "Block expressions" >:: check_block_expr;

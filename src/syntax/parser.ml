@@ -75,6 +75,7 @@ and parse_stmt parser =
   match parser.token.kind with
   | Token.Fun -> parse_fun parser
   | Token.Let -> parse_let parser
+  | Token.While -> parse_while parser
   | _ ->
     let lhs = parse_unary parser in
     if parser.token.kind = Token.Update then (
@@ -114,6 +115,12 @@ and parse_let parser =
   ignore (consume parser Token.Assign "expect a '='");
   let body = parse_expr parser in
   Ast.{value = Let (name, body); span = Source.merge start body.span}
+
+and parse_while parser =
+  let start = (advance parser).span in
+  let cond = parse_expr parser in
+  let body = parse_block parser in
+  Ast.{value = While (cond, body); span = Source.merge start body.span}
 
 and parse_expr parser = parse_binary parser 0 (parse_unary parser)
 

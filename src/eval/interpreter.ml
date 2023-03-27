@@ -34,6 +34,7 @@ and eval_stmt env node =
   | Ast.Fun funs -> eval_funs env funs
   | Ast.Let (name, value) -> (Environment.add name (eval_expr env value) env, Values.Unit)
   | Ast.Update (lhs, rhs) -> eval_update env lhs rhs
+  | Ast.While (cond, body) -> eval_while env cond body
   | Ast.Expr expr -> (env, eval_expr env Ast.{value = expr; span = node.span})
 
 and eval_funs env funs =
@@ -50,6 +51,12 @@ and eval_update env lhs rhs =
     value := eval_expr env rhs;
     (env, Values.Unit)
   | _ -> failwith "Cannot assign to a non-reference value"
+
+and eval_while env cond body =
+  while eval_expr env cond = Values.Boolean true do
+    ignore (eval_expr env body)
+  done;
+  (env, Values.Unit)
 
 and eval_expr env node =
   match Ast.(node.value) with

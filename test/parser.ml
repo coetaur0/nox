@@ -42,6 +42,13 @@ let check_update _ =
   check "x <- 3" "x <- 3.";
   check "&y <- @z" "&y <- @z"
 
+let check_while_loop _ =
+  check "while true { print(\"To infinity!\") }" "while true {print(\"To infinity!\")}";
+  check "while { let a = true; a} { a }" "while {let a = true; a} {a}"
+
+let check_invalid_while_loop _ =
+  check_errors "while b 10" ["1:9..1:11: expect a '{'."; "1:11..1:11: expect a '}'."]
+
 let check_binary_expr _ =
   check "x - 42 * 3.4 + 10 > 255" "(((x - (42. * 3.4)) + 10.) > 255.)";
   check "true || false && !b" "(true || (false && !b))";
@@ -142,6 +149,8 @@ let tests =
          "Variables" >:: check_var;
          "Invalid variables" >:: check_invalid_var;
          "Updates" >:: check_update;
+         "While loops" >:: check_while_loop;
+         "Invalid while loops" >:: check_invalid_while_loop;
          "Binary expressions" >:: check_binary_expr;
          "Invalid binary expressions" >:: check_invalid_binary_expr;
          "Unary expressions" >:: check_unary_expr;

@@ -201,6 +201,7 @@ and infer_stmt env stmt =
   | Ast.Fun funs -> infer_funs env funs
   | Ast.Let (name, value) -> infer_let env name value
   | Ast.Update (lhs, rhs) -> infer_update env lhs rhs
+  | Ast.While (cond, body) -> infer_while env cond body
   | Ast.Expr expr -> (env, infer_expr env Ast.{value = expr; span = stmt.span})
 
 and infer_funs env funs =
@@ -250,6 +251,11 @@ and infer_update env lhs rhs =
   let rhs_ty = infer_expr env rhs in
   unify lhs.span (Types.Ref (new_var !current_level)) lhs_ty;
   unify rhs.span lhs_ty (Types.Ref rhs_ty);
+  (env, Types.Unit)
+
+and infer_while env cond body =
+  unify cond.span Types.Boolean (infer_expr env cond);
+  ignore (infer_expr env body);
   (env, Types.Unit)
 
 and infer_expr env node =

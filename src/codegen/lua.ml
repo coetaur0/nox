@@ -34,6 +34,7 @@ and emit_stmt level stmt =
       (indent level) name (indent level) (emit_expr level record)
       (indent (level + 1))
       name (indent level)
+  | Ir.While (cond, body) -> emit_while level cond body
   | Ir.If (cond, thn, els) -> emit_if level cond thn els
   | Ir.Return value -> Printf.sprintf "%sreturn %s" (indent level) (emit_expr level value)
 
@@ -52,6 +53,11 @@ and emit_funs level funs =
 and emit_fun level name params body =
   Printf.sprintf "%s%s = function(%s)\n%s\n%send" (indent level) name
     (Printer.list_repr params (fun p -> p) ", ")
+    (emit_stmts (level + 1) body)
+    (indent level)
+
+and emit_while level cond body =
+  Printf.sprintf "%swhile %s do\n%s\n%send" (indent level) (emit_expr level cond)
     (emit_stmts (level + 1) body)
     (indent level)
 

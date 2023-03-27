@@ -66,6 +66,12 @@ let check_invalid_update _ =
   check_error "let x = 42; x <- 44"
     "1:13..1:14: expect a value of type &'a, but found a number value."
 
+let check_while_loop _ = check "let x = &3; while @x > 0 { x <- @x - 1 }" "unit"
+
+let check_invalid_while_loop _ =
+  check_error "while 10 { false }"
+    "1:7..1:9: expect a value of type boolean, but found a number value."
+
 let check_binary_expr _ =
   check "true || false" "boolean";
   check "10 < 100 == 9 > 3" "boolean";
@@ -160,6 +166,8 @@ let tests =
          "Variables" >:: check_var;
          "Updates" >:: check_update;
          "Invalid updates" >:: check_invalid_update;
+         "While loops" >:: check_while_loop;
+         "Invalid while loops" >:: check_invalid_while_loop;
          "Binary expressions" >:: check_binary_expr;
          "Invalid binary expressions" >:: check_invalid_binary_expr;
          "Unary expressions" >:: check_unary_expr;

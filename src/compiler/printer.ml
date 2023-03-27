@@ -57,6 +57,7 @@ and ast_stmt_repr stmt =
       " "
   | Ast.Let (name, value) -> Printf.sprintf "let %s = %s" name (ast_expr_repr value)
   | Ast.Update (lhs, rhs) -> Printf.sprintf "%s <- %s" (ast_expr_repr lhs) (ast_expr_repr rhs)
+  | Ast.While (cond, body) -> Printf.sprintf "while %s %s" (ast_expr_repr cond) (ast_expr_repr body)
   | Ast.Expr expr -> ast_expr_repr {value = expr; span = stmt.span}
 
 and ast_expr_repr expr =
@@ -158,6 +159,8 @@ and ir_stmt_repr = function
   | Ir.Decl name -> Printf.sprintf "let %s" name
   | Ir.Assign (lhs, rhs) -> Printf.sprintf "%s = %s" (ir_expr_repr lhs) (ir_expr_repr rhs)
   | Ir.CopyRecord (name, record) -> Printf.sprintf "%s = copy(%s)" name (ir_expr_repr record)
+  | Ir.While (cond, body) ->
+    Printf.sprintf "while %s {%s}" (ir_expr_repr cond) (list_repr body ir_stmt_repr "; ")
   | Ir.If (cond, thn, els) ->
     Printf.sprintf "if %s {%s} else {%s}" (ir_expr_repr cond) (ir_repr thn) (ir_repr els)
   | Ir.Return value -> Printf.sprintf "return %s" (ir_expr_repr value)

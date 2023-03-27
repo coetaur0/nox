@@ -37,6 +37,9 @@ let check_var _ =
   check "let b = true; b" "true";
   check "let u = (); u" "()"
 
+let check_while_loop _ =
+  check "let c = &3; let r = &1; while @c > 0 { r <- @r * 2; c <- @c - 1 }; @r" "8."
+
 let check_binary_expr _ =
   check "true || false" "true";
   check "10 < 100 == 9 > 3" "true";
@@ -95,6 +98,7 @@ let tests =
          "Mutually recursive functions" >:: check_mutually_recursive_fn;
          "Empty functions" >:: check_empty_fn;
          "Variables" >:: check_var;
+         "While loops" >:: check_while_loop;
          "Binary expressions" >:: check_binary_expr;
          "Unary expressions" >:: check_unary_expr;
          "If expressions" >:: check_if_expr;
