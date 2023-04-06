@@ -182,7 +182,7 @@ fun even(n) {
   if n == 0 {
     true
   } else if n > 0 {
-    !odd(n - 1)
+    odd(n - 1)
   } else {
     odd(n + 1)
   }
@@ -192,7 +192,7 @@ fun odd(n) {
   if n == 0 {
     false
   } else if n > 0 {
-    !even(n - 1)
+    even(n - 1)
   } else {
     even(n + 1)
   }
@@ -286,12 +286,19 @@ A record is defined by enclosing a sequence of assignments of field names to val
 It is possible to copy the fields of an existing record in a new one and extend it with new values by adding a `|` followed by the record expression whose fields must be copied at the end of a record declaration.
 A field in a record can be accessed by suffixing an expression denoting a record with a `.` followed by the field's name.
 
-For example, the following snippet declares two records `r0` and `r1`, where `r1` extends `r0` with a new field `z`, and adds the values of fields `y` and `z` of records `r0` and `r1`, respectively:
+For example, the following snippet declares two records `r0` and `r1`, where `r1` extends `r0` with a new field `z`, and adds the values of fields `y` and `z` in records `r0` and `r1`, respectively:
 
 ```
 let r0 = [x = 1, y = 3 b = true];
 let r1 = [z = 10 | r0];
 r0.y + r1.z
+```
+
+When extending a record, it is also possible to overwrite the old value of a field.
+In the following snippet, the value of field `y` is overwritten, so the result of the field access is `true` and not `2`:
+
+```
+[y = true | [x = 1, y = 2]].y
 ```
 
 Records in Nox are *polymorphic*.
@@ -304,7 +311,7 @@ fun f(r) {
 }
 ```
 
-the compiler infers that `r` must be of type `[x : 'a | 'b]`, meaning that any record containing a field `x` of any type can be passed to the function as arguments, even if it has other fields.
+the compiler infers that `r` must be of type `[x : 'a | 'b]`, meaning that any record containing a field `x` of any type can be passed to the function as arguments, even if it has other fields (this aspect is visible in the `| 'b` part at the end of the inferred type: this means that the argument record can extend any other record, as long as it features a field `x`).
 
 ### Variants
 
@@ -325,7 +332,7 @@ is a variant containing a value of type `boolean` and labelled with `:B`.
 A match expression can be used to perform different actions depending on the value of a variant.
 Match expressions are denoted by the `match` keyword, followed by some expression of variant type, and a series of *match arms* between `{` and `}`.
 A match arm is represented by a label followed by a variable name, the `=>` symbol and an expression.
-When a variant is being matched, the arm with the same label is selected, the value contained in the variant is bound to the arm's variable, and the expression after the `=>` is computed and returned.
+When a variant is being matched, the arm with the same label is selected, the value contained in the variant is bound to the arm's variable, and the expression after the `=>` is computed and its result is returned.
 
 In the following example, a variant containing a `number` and labelled with `:Some` is matched, the first arm is selected and the value `84.` is returned:
 
@@ -336,12 +343,12 @@ match :Some 42 {
 }
 ```
 
-If the value being matched had been labelled with `:None`, the second arm would have been taken, and the value `0` returned.
+If the value being matched had been labelled with `:None`, the second arm would have been taken and the value `0` returned.
 
 ### Blocks
 
 A block expression is simply a sequence of statements enclosed between `{` and `}`.
-When it is executed, the statements it contains are evaluated, and the value of the last one is returned.
+When it is executed, the statements it contains are evaluated and the value of the last one is returned.
 
 For example, the following snippet returns `true`:
 
@@ -354,7 +361,7 @@ For example, the following snippet returns `true`:
 ```
 
 Blocks are a way to explicitly represent scopes for variables.
-When a variable is defined inside of a block, it cannot be accessed outside of it.
+When a variable is defined inside of a block, it cannot be accessed from the outside.
 
 ### Conditional expressions
 
@@ -405,14 +412,14 @@ For example, if we have the following module definition in a file called `vector
 
 ```
 fun add(v0, v1) {
-  {x = v0.x + v1.x, y = v0.y + v1.y}
+  [x = v0.x + v1.x, y = v0.y + v1.y]
 };
 
 fun dot(v0, v1) {
   v0.x * v1.x + v0.y * v1.y
 };
 
-{add = add, dot = dot}
+[add = add, dot = dot]
 ```
 
 Then it is possible to load the function definitions it exports and use them as follows:
@@ -420,9 +427,9 @@ Then it is possible to load the function definitions it exports and use them as 
 ```
 let vector2d = open "vector2d";
 
-let v0 = {x = 1, y = 2};
+let v0 = [x = 1, y = 2];
 
-let v1 = {x = 3, y = 10};
+let v1 = [x = 3, y = 10];
 
 print(num2str(vector2d.add(v0, v1).x)); // Prints "4.".
 
