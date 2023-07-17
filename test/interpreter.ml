@@ -65,11 +65,11 @@ let check_application_expr _ =
   check "fun assign(r, x) { r <- x; x }; assign(&42, 43)" "43."
 
 let check_record_expr _ =
-  check "[num = 42, bool = true, str = \"some string\"]"
-    "[bool = true, num = 42., str = \"some string\"]";
-  check "[]" "[]"
+  check "{num = 42, bool = true, str = \"some string\"}"
+    "{bool = true, num = 42., str = \"some string\"}";
+  check "{}" "{}"
 
-let check_select_expr _ = check "[a = 32, b = ()].a" "32."
+let check_select_expr _ = check "{a = 32, b = ()}.a" "32."
 
 let check_variant_expr _ = check ":A 42" ":A 42."
 

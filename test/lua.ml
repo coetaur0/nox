@@ -146,9 +146,9 @@ let check_application_expr _ =
     "local f0\nf0 = function(x1)\n  return (x1 + 1.)\nend\nreturn f0(2.)"
 
 let check_record_expr _ =
-  check "[a = 42, b = true]" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\ntmp0.b = true\nreturn tmp0";
-  check "[a = 42 | [a = true]]" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\nreturn tmp0";
-  check "let r1 = [a = true]; let r2 = [a = 42 | r1]"
+  check "{a = 42, b = true}" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\ntmp0.b = true\nreturn tmp0";
+  check "{a = 42 | {a = true}}" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\nreturn tmp0";
+  check "let r1 = {a = true}; let r2 = {a = 42 | r1}"
     "local r10\n\
      local tmp1\n\
      tmp1 = {}\n\
@@ -163,7 +163,7 @@ let check_record_expr _ =
      r22 = tmp3\n\
      return nil"
 
-let check_select_expr _ = check "[a = 42].a" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\nreturn tmp0.a"
+let check_select_expr _ = check "{a = 42}.a" "local tmp0\ntmp0 = {}\ntmp0.a = 42.\nreturn tmp0.a"
 
 let check_variant_expr _ =
   check ":A ()" "local tmp0\ntmp0 = {}\ntmp0.case = \":A\"\ntmp0.value = nil\nreturn tmp0"

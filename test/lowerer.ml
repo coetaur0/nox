@@ -68,7 +68,7 @@ let check_if_expr _ =
 
 let check_match_expr _ =
   check "match :A 42 {:A a => 2 * a, :B b => b - 3, def => 0}"
-    "let tmp0; tmp0 = []; tmp0.case = \":A\"; tmp0.value = 42.; if (tmp0.case == \":A\") {let a2; \
+    "let tmp0; tmp0 = {}; tmp0.case = \":A\"; tmp0.value = 42.; if (tmp0.case == \":A\") {let a2; \
      a2 = tmp0.value; return (2. * a2)} else {if (tmp0.case == \":B\") {let b3; b3 = tmp0.value; \
      return (b3 - 3.)} else {let def; def1 = tmp0.value; return 0.}}"
 
@@ -77,22 +77,22 @@ let check_application_expr _ =
   check "<x> {x * 2}(3)" "return <x0> {return (x0 * 2.)}(3.)"
 
 let check_record_expr _ =
-  check "[a = 42, b = true, c = ()]"
-    "let tmp0; tmp0 = []; tmp0.a = 42.; tmp0.b = true; tmp0.c = (); return tmp0";
-  check "[num = 42, bool = true | [r = [a = 1, b = 2]]]"
-    "let tmp0; tmp0 = []; tmp0.bool = true; tmp0.num = 42.; let tmp1; tmp1 = []; tmp1.a = 1.; \
+  check "{a = 42, b = true, c = ()}"
+    "let tmp0; tmp0 = {}; tmp0.a = 42.; tmp0.b = true; tmp0.c = (); return tmp0";
+  check "{num = 42, bool = true | {r = {a = 1, b = 2}}}"
+    "let tmp0; tmp0 = {}; tmp0.bool = true; tmp0.num = 42.; let tmp1; tmp1 = {}; tmp1.a = 1.; \
      tmp1.b = 2.; tmp0.r = tmp1; return tmp0";
-  check "[a = 10 | [a = true]]" "let tmp0; tmp0 = []; tmp0.a = 10.; return tmp0";
-  check "let r = [a = 10]; let rr = [a = true | r]"
-    "let r0; let tmp1; tmp1 = []; tmp1.a = 10.; r0 = tmp1; let rr2; tmp3 = copy(r0); tmp3.a = \
+  check "{a = 10 | {a = true}}" "let tmp0; tmp0 = {}; tmp0.a = 10.; return tmp0";
+  check "let r = {a = 10}; let rr = {a = true | r}"
+    "let r0; let tmp1; tmp1 = {}; tmp1.a = 10.; r0 = tmp1; let rr2; tmp3 = copy(r0); tmp3.a = \
      true; rr2 = tmp3; return ()";
-  check "[]" "let tmp0; tmp0 = []; return tmp0"
+  check "{}" "let tmp0; tmp0 = {}; return tmp0"
 
 let check_select_expr _ =
-  check "[a = 42, b = true].b" "let tmp0; tmp0 = []; tmp0.a = 42.; tmp0.b = true; return tmp0.b"
+  check "{a = 42, b = true}.b" "let tmp0; tmp0 = {}; tmp0.a = 42.; tmp0.b = true; return tmp0.b"
 
 let check_variant_expr _ =
-  check ":A true" "let tmp0; tmp0 = []; tmp0.case = \":A\"; tmp0.value = true; return tmp0"
+  check ":A true" "let tmp0; tmp0 = {}; tmp0.case = \":A\"; tmp0.value = true; return tmp0"
 
 let check_lambda_expr _ = check "<x, y> {x + y}" "return <x0, y1> {return (x0 + y1)}"
 

@@ -8,6 +8,7 @@ type t =
   { source : Source.t;
     lexer : Lexer.t;
     mutable token : Token.t;
+    mutable next_tokens : Token.t * Token.t;
     mutable diagnostics : Diagnostic.t list;
     mutable panic : bool }
 
@@ -15,7 +16,8 @@ type t =
 
 let advance parser =
   let token = parser.token in
-  parser.token <- Lexer.next parser.lexer;
+  parser.token <- fst parser.next_tokens;
+  parser.next_tokens <- (snd parser.next_tokens, Lexer.next parser.lexer);
   token
 
 let emit_diagnostic parser message span =
@@ -193,8 +195,7 @@ and parse_path parser =
 
 and parse_primary parser =
   match parser.token.kind with
-  | Token.LBrace -> parse_block parser
-  | Token.LBracket -> parse_record parser
+  | Token.LBrace -> parse_brace parser
   | Token.If -> parse_if parser
   | Token.Match -> parse_match parser
   | Token.Lt -> parse_lambda parser
@@ -208,6 +209,11 @@ and parse_primary parser =
   | _ ->
     emit_diagnostic parser "expect an expression" parser.token.span;
     Ast.{value = Invalid; span = parser.token.span}
+
+and parse_brace parser =
+  match ((fst parser.next_tokens).kind, (snd parser.next_tokens).kind) with
+  | (Token.Name, Token.Assign) | (Token.Pipe, _) | (Token.RBrace, _) -> parse_record parser
+  | _ -> parse_block parser
 
 and parse_block parser =
   let left = parser.token.span.left in
@@ -231,7 +237,7 @@ and parse_record parser =
   in
   let left = (advance parser).span.left in
   let fields =
-    Environment.of_list (parse_list parser parse_field Token.Comma [Token.Pipe; Token.RBracket])
+    Environment.of_list (parse_list parser parse_field Token.Comma [Token.Pipe; Token.RBrace])
   in
   let record =
     if parser.token.kind = Token.Pipe then (
@@ -241,7 +247,7 @@ and parse_record parser =
       Ast.{value = EmptyRecord; span = parser.token.span}
   in
   let right =
-    match consume parser Token.RBracket "expect a ']'" with
+    match consume parser Token.RBrace "expect a '}'" with
     | Some token -> token.span.right
     | None -> parser.token.span.left
   in
@@ -361,7 +367,15 @@ and parse_paren parser =
 let parse source =
   let lexer = Lexer.make source in
   let token = Lexer.next lexer in
-  let parser = {source; lexer; token; diagnostics = []; panic = false} in
+  let next_token = Lexer.next lexer in
+  let parser =
+    { source;
+      lexer;
+      token;
+      next_tokens = (next_token, Lexer.next lexer);
+      diagnostics = [];
+      panic = false }
+  in
   let stmts = parse_stmts parser in
   ignore (consume parser Token.Eof "expect the end of file");
   if parser.diagnostics = [] then

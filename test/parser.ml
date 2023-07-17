@@ -71,13 +71,13 @@ let check_block_expr _ =
 let check_invalid_block_expr _ = check_errors "{let x = 3; x" ["1:14..1:14: expect a '}'."]
 
 let check_record_expr _ =
-  check "[a = 42, b = true]" "[a = 42., b = true | []]";
-  check "[]" "[]";
-  check "[|[a = 42]]" "[a = 42. | []]"
+  check "{a = 42, b = true}" "{a = 42., b = true | {}}";
+  check "{}" "{}";
+  check "{|{a = 42}}" "{a = 42. | {}}"
 
 let check_invalid_record_expr _ =
-  check_errors "[= 3]" ["1:2..1:3: expect a field name."];
-  check_errors "[a 42]" ["1:4..1:6: expect a '='."]
+  check_errors "{= 3}" ["1:2..1:3: expect an expression."];
+  check_errors "{a 42}" ["1:4..1:6: expect a '}'."]
 
 let check_if_expr _ =
   check "if c == 0 {42} else if c > 0 {-42} else {1}"
@@ -106,7 +106,7 @@ let check_invalid_application_expr _ = check_errors "f(2" ["1:4..1:4: expect a '
 
 let check_select_expr _ =
   check "a.b.c" "a.b.c";
-  check "[a = 42].a" "[a = 42. | []].a";
+  check "{a = 42}.a" "{a = 42. | {}}.a";
   check "f().g().x" "f().g().x"
 
 let check_lambda_expr _ =
