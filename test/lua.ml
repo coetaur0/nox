@@ -168,6 +168,22 @@ let check_select_expr _ = check "{a = 42}.a" "local tmp0\ntmp0 = {}\ntmp0.a = 42
 let check_variant_expr _ =
   check ":A ()" "local tmp0\ntmp0 = {}\ntmp0.case = \":A\"\ntmp0.value = nil\nreturn tmp0"
 
+let check_array_expr _ =
+  check "[1, 1 + 2, 3 + 2, 5 + 2, 7 + 2]"
+    "local tmp0\ntmp0 = {1., (1. + 2.), (3. + 2.), (5. + 2.), (7. + 2.)}\nreturn tmp0";
+  check "[[true, false], [false]]"
+    "local tmp0\n\
+     local tmp1\n\
+     tmp1 = {true, false}\n\
+     local tmp2\n\
+     tmp2 = {false}\n\
+     tmp0 = {tmp1, tmp2}\n\
+     return tmp0"
+
+let check_index_expr _ =
+  check "[1, 2, 3][0]"
+    "local tmp0\ntmp0 = {1., 2., 3.}\nreturn tmp0[0. + 1] or error(\"Invalid array index\")"
+
 let check_lambda_expr _ = check "<x, y> {x + y}" "return function(x0, y1)\n  return (x0 + y1)\nend"
 
 let check_number _ = check "42" "return 42."
@@ -202,6 +218,8 @@ let tests =
          "Record expressions" >:: check_record_expr;
          "Select expressions" >:: check_select_expr;
          "Variant expressions" >:: check_variant_expr;
+         "Array expressions" >:: check_array_expr;
+         "Index expressions" >:: check_index_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;

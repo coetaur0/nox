@@ -75,6 +75,10 @@ and emit_expr level = function
   | Ir.App (callee, args) ->
     Printf.sprintf "%s(%s)" (emit_expr level callee) (Printer.list_repr args (emit_expr level) ", ")
   | Ir.Select (record, field) -> Printf.sprintf "%s.%s" (emit_expr level record) field
+  | Ir.Array elements -> Printf.sprintf "{%s}" (Printer.list_repr elements (emit_expr level) ", ")
+  | Ir.Index (array, index) ->
+    Printf.sprintf "%s[%s + 1] or error(\"Invalid array index\")" (emit_expr level array)
+      (emit_expr level index)
   | Ir.Lambda (params, body) ->
     Printf.sprintf "function(%s)\n%s\n%send"
       (Printer.list_repr params (fun p -> p) ", ")

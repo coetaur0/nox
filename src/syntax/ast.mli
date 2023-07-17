@@ -50,6 +50,8 @@ and expr =
   | Record of expr node Environment.t * expr node
   | Select of expr node * name node
   | Variant of name * expr node
+  | Array of expr node list
+  | Index of expr node * expr node
   | Lambda of name list * expr node
   | Open of name
   | Var of name

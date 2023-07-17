@@ -11,6 +11,7 @@ type t =
   | Ref of t
   | Record of t
   | Variant of t
+  | Array of t
   | Number
   | Boolean
   | String

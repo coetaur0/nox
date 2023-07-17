@@ -85,6 +85,9 @@ and assign lhs env rhs =
     block_stmts @ [Ir.Assign (lhs, block_expr)]
   | Ast.If (cond, thn, els) -> lower_if env cond thn els (assign lhs)
   | Ast.Match (expr, arms, default) -> lower_match env expr arms default (assign lhs)
+  | Ast.Array elements ->
+    let (array_stmts, array_expr) = lower_array env elements in
+    array_stmts @ [Ir.Assign (lhs, array_expr)]
   | _ ->
     let (rhs_stmts, rhs_expr) = lower_expr env rhs in
     rhs_stmts @ [Ir.Assign (lhs, rhs_expr)]
@@ -114,7 +117,7 @@ and lower_expr env node =
   match Ast.(node.value) with
   | Ast.Binary (op, lhs, rhs) -> lower_binary env op lhs rhs
   | Ast.Unary (op, operand) -> lower_unary env op operand
-  | Ast.Block _ | Ast.If _ | Ast.Match _ ->
+  | Ast.Block _ | Ast.If _ | Ast.Match _ | Ast.Array _ ->
     let tmp = gensym "tmp" in
     let ir_stmts = assign (Ir.Var tmp) env node in
     ([Ir.Decl tmp] @ ir_stmts, Ir.Var tmp)
@@ -128,6 +131,7 @@ and lower_expr env node =
     lower_record env
       (Environment.of_list [("case", case_field); ("value", value)])
       Ast.{value = EmptyRecord; span = node.span}
+  | Ast.Index (array, index) -> lower_index env array index
   | Ast.Lambda (params, body) -> lower_lambda env params body
   | Ast.Open name -> ([], Ir.Open name)
   | Ast.Var x -> ([], Ir.Var (Environment.find x env))
@@ -212,6 +216,21 @@ and lower_record env fields record =
       fields' []
   in
   (record_stmts @ copy_stmt @ fields_stmts, record_copy)
+
+and lower_array env elements =
+  let (stmts, exprs) =
+    List.fold_left
+      (fun (stmts, exprs) element ->
+        let (elt_stmts, elt_expr) = lower_expr env element in
+        (stmts @ elt_stmts, exprs @ [elt_expr]) )
+      ([], []) elements
+  in
+  (stmts, Ir.Array exprs)
+
+and lower_index env array index =
+  let (array_stmts, array_expr) = lower_expr env array in
+  let (index_stmts, index_expr) = lower_expr env index in
+  (array_stmts @ index_stmts, Ir.Index (array_expr, index_expr))
 
 and lower_lambda env params body =
   let (env', params') = mangle_list env params in

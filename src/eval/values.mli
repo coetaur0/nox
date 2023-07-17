@@ -10,6 +10,7 @@ and t =
   | Ref of t ref
   | Record of t Environment.t
   | Variant of string * t
+  | Array of t array
   | Number of float
   | Boolean of bool
   | String of string

@@ -73,6 +73,14 @@ let check_select_expr _ = check "{a = 32, b = ()}.a" "32."
 
 let check_variant_expr _ = check ":A 42" ":A 42."
 
+let check_array_expr _ =
+  check "[1, 3, 5, 7, 9]" "[1., 3., 5., 7., 9.]";
+  check "[[true, false], [false]]" "[[true, false], [false]]"
+
+let check_index_expr _ =
+  check "[1, 3, 5, 7, 9][2]" "5.";
+  check "[[true, false], [false]][0][1]" "false"
+
 let check_lambda_expr _ =
   check "<x> {x}" "<closure>";
   check "<x> {let y = <z> {x(z)}; y}" "<closure>"
@@ -107,6 +115,8 @@ let tests =
          "Record expressions" >:: check_record_expr;
          "Select expressions" >:: check_select_expr;
          "Variant expressions" >:: check_variant_expr;
+         "Array expressions" >:: check_array_expr;
+         "Index expressions" >:: check_index_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;

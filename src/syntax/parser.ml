@@ -188,6 +188,15 @@ and parse_path parser =
         let field = Ast.{value = Source.read parser.source token.span; span = token.span} in
         parse_path' Ast.{value = Select (path, field); span = Source.merge path.span field.span}
       | None -> path )
+    | Token.LBracket ->
+      ignore (advance parser);
+      let index = parse_expr parser in
+      let span_end =
+        match consume parser Token.RBracket "expect a ']'" with
+        | Some token -> token.span
+        | None -> Ast.(path.span)
+      in
+      parse_path' Ast.{value = Index (path, index); span = Source.merge path.span span_end}
     | _ -> path
   in
   let path = parse_primary parser in
@@ -196,6 +205,7 @@ and parse_path parser =
 and parse_primary parser =
   match parser.token.kind with
   | Token.LBrace -> parse_brace parser
+  | Token.LBracket -> parse_array parser
   | Token.If -> parse_if parser
   | Token.Match -> parse_match parser
   | Token.Lt -> parse_lambda parser
@@ -255,6 +265,16 @@ and parse_record parser =
     record
   else
     Ast.{value = Record (fields, record); span = Source.{left; right}}
+
+and parse_array parser =
+  let left = (advance parser).span.left in
+  let elements = parse_list parser parse_expr Token.Comma [Token.RBracket] in
+  let right =
+    match consume parser Token.RBracket "expect a ']'" with
+    | Some token -> token.span.right
+    | None -> parser.token.span.right
+  in
+  Ast.{value = Array elements; span = Source.{left; right}}
 
 and parse_if parser =
   let start = (advance parser).span in

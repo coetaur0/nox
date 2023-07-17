@@ -76,6 +76,11 @@ and eval_expr env node =
     | Values.Record record -> Environment.find field.value record
     | _ -> failwith "expect a record" )
   | Ast.Variant (case, value) -> Values.Variant (case, eval_expr env value)
+  | Ast.Array elements -> Values.Array (Array.of_list (List.map (eval_expr env) elements))
+  | Ast.Index (array, index) -> (
+    match (eval_expr env array, eval_expr env index) with
+    | (Values.Array elements, Values.Number n) -> elements.(Int.of_float n)
+    | _ -> failwith "Invalid array index" )
   | Ast.Lambda (params, body) -> Values.Closure (ref env, params, body)
   | Ast.Open name -> Environment.find name env
   | Ast.Var x -> Environment.find x env

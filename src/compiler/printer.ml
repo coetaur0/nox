@@ -90,6 +90,8 @@ and ast_expr_repr expr =
     Printf.sprintf "{%s | %s}" fields_repr (ast_expr_repr record)
   | Ast.Select (record, field) -> Printf.sprintf "%s.%s" (ast_expr_repr record) field.value
   | Ast.Variant (case, value) -> Printf.sprintf "%s %s" case (ast_expr_repr value)
+  | Ast.Array elements -> Printf.sprintf "[%s]" (list_repr elements ast_expr_repr ", ")
+  | Ast.Index (array, index) -> Printf.sprintf "%s[%s]" (ast_expr_repr array) (ast_expr_repr index)
   | Ast.Lambda (params, body) ->
     Printf.sprintf "<%s> %s" (list_repr params (fun p -> p) ", ") (ast_expr_repr body)
   | Ast.Open name -> Printf.sprintf "open %s" name
@@ -122,6 +124,7 @@ let rec type_repr ty =
     match row with
     | Types.EmptyRow -> Printf.sprintf "%s" fields_repr
     | _ -> Printf.sprintf "%s | %s" fields_repr (type_repr row) )
+  | Types.Array ty' -> Printf.sprintf "[%s]" (type_repr ty')
   | Types.Number -> "number"
   | Types.Boolean -> "boolean"
   | Types.String -> "string"
@@ -141,6 +144,8 @@ let rec value_repr = function
          (fun (name, value) -> Printf.sprintf "%s = %s" name (value_repr value))
          ", " )
   | Values.Variant (case, value) -> Printf.sprintf "%s %s" case (value_repr value)
+  | Values.Array elements ->
+    Printf.sprintf "[%s]" (list_repr (Array.to_list elements) value_repr ", ")
   | Values.Number num -> string_of_float num
   | Values.Boolean bool -> string_of_bool bool
   | Values.String string -> Printf.sprintf "\"%s\"" string
@@ -172,6 +177,8 @@ and ir_expr_repr = function
   | Ir.App (callee, args) ->
     Printf.sprintf "%s(%s)" (ir_expr_repr callee) (list_repr args ir_expr_repr ", ")
   | Ir.Select (record, field) -> Printf.sprintf "%s.%s" (ir_expr_repr record) field
+  | Ir.Array elements -> Printf.sprintf "[%s]" (list_repr elements ir_expr_repr ", ")
+  | Ir.Index (array, index) -> Printf.sprintf "%s[%s]" (ir_expr_repr array) (ir_expr_repr index)
   | Ir.Lambda (params, body) ->
     Printf.sprintf "<%s> {%s}" (list_repr params (fun p -> p) ", ") (ir_repr body)
   | Ir.Open name -> Printf.sprintf "open %s" name

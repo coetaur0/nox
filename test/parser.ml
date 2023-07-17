@@ -123,6 +123,23 @@ let check_variant_expr _ =
 
 let check_invalid_variant_expr _ = check_errors ":A" ["1:3..1:3: expect an expression."]
 
+let check_array_expr _ =
+  check "[1, x + 2, 3]" "[1., (x + 2.), 3.]";
+  check "[true, false]" "[true, false]";
+  check "[[true, false], [false, true]]" "[[true, false], [false, true]]";
+  check "[]" "[]"
+
+let check_invalid_array_expr _ = check_errors "[1, 2" ["1:6..1:6: expect a ']'."]
+
+let check_index_expr _ =
+  check "[1, 2][0]" "[1., 2.][0.]";
+  check "[[true], [false]][0][0]" "[[true], [false]][0.][0.]";
+  check "x[0][i]" "x[0.][i]"
+
+let check_invalid_index_expr _ =
+  check_errors "x[1" ["1:4..1:4: expect a ']'."];
+  check_errors "x[]" ["1:3..1:4: expect an expression."]
+
 let check_open_expr _ = check "open \"module\"" "open \"module\""
 
 let check_invalid_open_expr _ =
@@ -168,6 +185,10 @@ let tests =
          "Selection expressions" >:: check_select_expr;
          "Variant expressions" >:: check_variant_expr;
          "Invalid variant expressions" >:: check_invalid_variant_expr;
+         "Array expressions" >:: check_array_expr;
+         "Invalid array expressions" >:: check_invalid_array_expr;
+         "Index expressions" >:: check_index_expr;
+         "Invalid index expressions" >:: check_invalid_index_expr;
          "Open expressions" >:: check_open_expr;
          "Invalid open expressions" >:: check_invalid_open_expr;
          "Lambda expressions" >:: check_lambda_expr;

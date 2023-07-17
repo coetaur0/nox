@@ -16,6 +16,8 @@ and expr =
   | Unary of Ast.unop * expr
   | App of expr * expr list
   | Select of expr * Ast.name
+  | Array of expr list
+  | Index of expr * expr
   | Lambda of Ast.name list * stmt list
   | Open of Ast.name
   | Var of Ast.name

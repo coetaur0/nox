@@ -137,6 +137,24 @@ let check_variant_expr _ =
   check ":A 42" "<:A : number | 'a>";
   check ":Some \"string\"" "<:Some : string | 'a>"
 
+let check_array_expr _ =
+  check "[1, 3, 5, 7, 9]" "[number]";
+  check "[true, false]" "[boolean]";
+  check "[[true, true], [false, true]]" "[[boolean]]";
+  check "[[[\"a\"]]]" "[[[string]]]"
+
+let check_invalid_array_expr _ =
+  check_error "[1, true]" "1:5..1:9: expect a value of type number, but found a boolean value.";
+  check_error "[[true, false], [1, 2]]"
+    "1:17..1:23: expect a value of type boolean, but found a number value."
+
+let check_index_expr _ =
+  check "[1, 2, 3][0]" "number";
+  check "[[true, false], [false, true]][0][1]" "boolean"
+
+let check_invalid_index_expr _ =
+  check_error "[1, 2][true]" "1:8..1:12: expect a value of type number, but found a boolean value."
+
 let check_lambda_expr _ =
   check "<x> {x}" "('a) -> 'a";
   check "<x> {let y = <z> {x(z)}; y}" "(('b) -> 'd) -> ('b) -> 'd"
@@ -182,6 +200,10 @@ let tests =
          "Select expressions" >:: check_select_expr;
          "Invalid select expressions" >:: check_invalid_select_expr;
          "Variant expressions" >:: check_variant_expr;
+         "Array expressions" >:: check_array_expr;
+         "Invalid array expressions" >:: check_invalid_array_expr;
+         "Index expressions" >:: check_index_expr;
+         "Invalid index expressions" >:: check_invalid_index_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;

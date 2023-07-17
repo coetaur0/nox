@@ -55,6 +55,7 @@ let rec generalise = function
   | Types.Record row -> Types.Record (generalise row)
   | Types.Variant row -> Types.Variant (generalise row)
   | Types.Row (fields, row) -> Types.Row (Environment.map generalise fields, generalise row)
+  | Types.Array ty -> Types.Array (generalise ty)
   | _ as ty -> ty
 
 let instantiate ty =
@@ -72,6 +73,7 @@ let instantiate ty =
     | Types.Record row -> Types.Record (instantiate' row)
     | Types.Variant row -> Types.Variant (instantiate' row)
     | Types.Row (fields, row) -> Types.Row (Environment.map instantiate' fields, instantiate' row)
+    | Types.Array ty -> Types.Array (instantiate' ty)
     | _ as ty -> ty
   in
   instantiate' ty
@@ -107,6 +109,7 @@ let rec occurs typevar = function
   | Types.Variant row -> occurs typevar row
   | Types.Row (fields, row) ->
     Environment.exists (fun _ ty -> occurs typevar ty) fields || occurs typevar row
+  | Types.Array ty -> occurs typevar ty
   | _ -> false
 
 let rec unify span lhs rhs =
@@ -133,6 +136,7 @@ let rec unify span lhs rhs =
     | (Types.Row (fields, _), Types.EmptyRow) | (Types.EmptyRow, Types.Row (fields, _)) ->
       let (label, _) = Environment.choose fields in
       raise (TypeError {message = Printf.sprintf "type doesn't contain label '%s'" label; span})
+    | (Types.Array lhs_ty, Types.Array rhs_ty) -> unify span lhs_ty rhs_ty
     | (Types.Number, Types.Number)
      |(Types.Boolean, Types.Boolean)
      |(Types.String, Types.String)
@@ -271,6 +275,8 @@ and infer_expr env node =
   | Ast.Record (fields, record) -> infer_record env fields record
   | Ast.Select (path, field) -> infer_select env path field
   | Ast.Variant (case, value) -> infer_variant env case value
+  | Ast.Array elements -> infer_array env elements
+  | Ast.Index (array, index) -> infer_index env array index
   | Ast.Lambda (params, body) -> infer_lambda env params body
   | Ast.Open name -> (
     try Environment.find name env
@@ -405,6 +411,17 @@ and infer_variant env case value =
   let variant_type = Types.Variant (Types.Row (Environment.singleton case case_type, row_type)) in
   unify value.span case_type (infer_expr env value);
   variant_type
+
+and infer_array env elements =
+  let element_type = new_var !current_level in
+  List.iter (fun element -> unify Ast.(element.span) element_type (infer_expr env element)) elements;
+  Types.Array element_type
+
+and infer_index env array index =
+  let element_type = new_var !current_level in
+  unify array.span (Types.Array element_type) (infer_expr env array);
+  unify index.span Types.Number (infer_expr env index);
+  element_type
 
 and infer_lambda env params body =
   let param_types = List.map (fun _ -> new_var !current_level) params in

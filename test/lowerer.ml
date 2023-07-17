@@ -39,7 +39,8 @@ let check_empty_fn _ = check "fun f() {}; f" "fun f0() {return ()}; return f0"
 
 let check_var _ =
   check "let x = 42; x" "let x0; x0 = 42.; return x0";
-  check "let f = <x> {x + 1}; f(1)" "let f0; f0 = <x1> {return (x1 + 1.)}; return f0(1.)"
+  check "let f = <x> {x + 1}; f(1)" "let f0; f0 = <x1> {return (x1 + 1.)}; return f0(1.)";
+  check "let a = [1, 2, 3]; a" "let a0; a0 = [1., 2., 3.]; return a0"
 
 let check_update _ =
   check "let x = &42; x <- @x + 1" "let x0; x0 = &42.; @x0 = (@x0 + 1.); return ()"
@@ -94,6 +95,18 @@ let check_select_expr _ =
 let check_variant_expr _ =
   check ":A true" "let tmp0; tmp0 = {}; tmp0.case = \":A\"; tmp0.value = true; return tmp0"
 
+let check_array_expr _ =
+  check "[1, 3 * 3, 2 - 4]" "let tmp0; tmp0 = [1., (3. * 3.), (2. - 4.)]; return tmp0";
+  check "[[true, false], [false]]"
+    "let tmp0; let tmp1; tmp1 = [true, false]; let tmp2; tmp2 = [false]; tmp0 = [tmp1, tmp2]; \
+     return tmp0"
+
+let check_index_expr _ =
+  check "[1, 3, 5, 7, 9][4]" "let tmp0; tmp0 = [1., 3., 5., 7., 9.]; return tmp0[4.]";
+  check "[[true, false], [false]][0][1]"
+    "let tmp0; let tmp1; tmp1 = [true, false]; let tmp2; tmp2 = [false]; tmp0 = [tmp1, tmp2]; \
+     return tmp0[0.][1.]"
+
 let check_lambda_expr _ = check "<x, y> {x + y}" "return <x0, y1> {return (x0 + y1)}"
 
 let check_number _ = check "42" "return 42."
@@ -126,6 +139,8 @@ let tests =
          "Record expressions" >:: check_record_expr;
          "Select expressions" >:: check_select_expr;
          "Variant expressions" >:: check_variant_expr;
+         "Array expressions" >:: check_array_expr;
+         "Index expressions" >:: check_index_expr;
          "Lambda expressions" >:: check_lambda_expr;
          "Number literals" >:: check_number;
          "Boolean literals" >:: check_boolean;
