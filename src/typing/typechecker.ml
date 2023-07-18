@@ -136,7 +136,15 @@ let rec unify span lhs rhs =
     | (Types.Row (fields, _), Types.EmptyRow) | (Types.EmptyRow, Types.Row (fields, _)) ->
       let (label, _) = Environment.choose fields in
       raise (TypeError {message = Printf.sprintf "type doesn't contain label '%s'" label; span})
-    | (Types.Array lhs_ty, Types.Array rhs_ty) -> unify span lhs_ty rhs_ty
+    | (Types.Array lhs_ty, Types.Array rhs_ty) -> (
+      try unify span lhs_ty rhs_ty
+      with TypeError _ ->
+        let message =
+          Printf.sprintf "expect a value of type %s, but found a %s value"
+            (Printer.type_repr (Types.Array lhs_ty))
+            (Printer.type_repr (Types.Array rhs_ty))
+        in
+        raise (TypeError {message; span}) )
     | (Types.Number, Types.Number)
      |(Types.Boolean, Types.Boolean)
      |(Types.String, Types.String)

@@ -76,6 +76,8 @@ let run_repl () =
         with
         | Parser.SyntaxError diagnostics -> print_syntax_errors "input" diagnostics
         | Typechecker.TypeError diagnostic -> print_type_error "input" diagnostic
+        | Failure message | Invalid_argument message ->
+          print_endline (Printf.sprintf "Runtime error: %s." message)
       )
     with End_of_file ->
       print_endline "";

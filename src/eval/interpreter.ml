@@ -79,7 +79,11 @@ and eval_expr env node =
   | Ast.Array elements -> Values.Array (Array.of_list (List.map (eval_expr env) elements))
   | Ast.Index (array, index) -> (
     match (eval_expr env array, eval_expr env index) with
-    | (Values.Array elements, Values.Number n) -> elements.(Int.of_float n)
+    | (Values.Array elements, Values.Number n) ->
+      if Float.is_integer n then
+        elements.(Int.of_float n)
+      else
+        failwith "Invalid array index"
     | _ -> failwith "Invalid array index" )
   | Ast.Lambda (params, body) -> Values.Closure (ref env, params, body)
   | Ast.Open name -> Environment.find name env

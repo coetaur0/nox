@@ -146,7 +146,9 @@ let check_array_expr _ =
 let check_invalid_array_expr _ =
   check_error "[1, true]" "1:5..1:9: expect a value of type number, but found a boolean value.";
   check_error "[[true, false], [1, 2]]"
-    "1:17..1:23: expect a value of type boolean, but found a number value."
+    "1:17..1:23: expect a value of type [boolean], but found a [number] value.";
+  check_error "[[[false]], [true]]"
+    "1:13..1:19: expect a value of type [[boolean]], but found a [boolean] value."
 
 let check_index_expr _ =
   check "[1, 2, 3][0]" "number";
