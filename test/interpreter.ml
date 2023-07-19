@@ -48,7 +48,8 @@ let check_binary_expr _ =
 
 let check_unary_expr _ =
   check "!!false" "false";
-  check "-10" "-10."
+  check "-10" "-10.";
+  check "#[1, 2]" "2."
 
 let check_if_expr _ =
   check "if true {10} else {-10}" "10.";

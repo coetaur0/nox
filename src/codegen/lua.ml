@@ -99,6 +99,7 @@ and emit_unary level op operand =
     | Ast.Neg -> ("-", "")
     | Ast.Ref -> ("({", "})")
     | Ast.Deref -> ("", "[1]")
+    | Ast.Size -> ("#", "")
   in
   Printf.sprintf "%s%s%s" prefix (emit_expr level operand) postfix
 

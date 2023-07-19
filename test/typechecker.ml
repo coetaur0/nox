@@ -86,7 +86,8 @@ let check_unary_expr _ =
   check "!!true" "boolean";
   check "--10" "number";
   check "&42" "&number";
-  check "@&true" "boolean"
+  check "@&true" "boolean";
+  check "#[1, 2]" "number"
 
 let check_invalid_unary_expr _ =
   check_error "!10" "1:2..1:4: expect a value of type boolean, but found a number value.";

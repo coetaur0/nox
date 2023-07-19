@@ -121,6 +121,7 @@ and eval_unary env op operand =
   | (Ast.Neg, Values.Number n) -> Values.Number (-.n)
   | (Ast.Ref, value) -> Values.Ref (ref value)
   | (Ast.Deref, Values.Ref r) -> !r
+  | (Ast.Size, Values.Array elements) -> Values.Number (Float.of_int (Array.length elements))
   | _ -> failwith "Invalid operand"
 
 and eval_block env stmts =

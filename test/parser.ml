@@ -60,7 +60,8 @@ let check_unary_expr _ =
   check "!!true" "!!true";
   check "---3" "---3.";
   check "&42" "&42.";
-  check "@&3" "@&3."
+  check "@&3" "@&3.";
+  check "#[1, 2]" "#[1., 2.]"
 
 let check_invalid_unary_expr _ = check_errors "!" ["1:2..1:2: expect an expression."]
 

@@ -124,6 +124,7 @@ let lex_symbol lexer =
     | (Some '!', _) -> (Token.Not, 1)
     | (Some '&', _) -> (Token.Ref, 1)
     | (Some '@', _) -> (Token.Deref, 1)
+    | (Some '#', _) -> (Token.Size, 1)
     | (Some '(', _) -> (Token.LParen, 1)
     | (Some ')', _) -> (Token.RParen, 1)
     | (Some '{', _) -> (Token.LBrace, 1)

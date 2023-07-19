@@ -57,7 +57,8 @@ let check_binary_expr _ =
 let check_unary_expr _ =
   check "--3" "return --3.";
   check "!true" "return !true";
-  check "@&42" "return @&42."
+  check "@&42" "return @&42.";
+  check "#[1, 2]" "let tmp0; tmp0 = [1., 2.]; return #tmp0"
 
 let check_block_expr _ =
   check "{let x = 1; if x < 1 {true} else {false}}"

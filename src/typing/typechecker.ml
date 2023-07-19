@@ -332,6 +332,9 @@ and infer_unary env op operand =
     let ty = new_var !current_level in
     unify span (Types.Ref ty) operand_type;
     ty
+  | Ast.Size ->
+    unify span (Types.Array (new_var !current_level)) operand_type;
+    Types.Number
 
 and infer_if env cond thn els =
   let cond_type = infer_expr env cond in

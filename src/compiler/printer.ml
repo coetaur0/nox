@@ -43,6 +43,7 @@ let unop_repr op =
   | Ast.Neg -> "-"
   | Ast.Ref -> "&"
   | Ast.Deref -> "@"
+  | Ast.Size -> "#"
 
 let rec ast_repr stmts = list_repr stmts ast_stmt_repr "; "
 

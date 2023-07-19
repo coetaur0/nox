@@ -30,6 +30,7 @@ type unop =
   | Neg
   | Ref
   | Deref
+  | Size
 
 (** An AST statement. *)
 type stmt =

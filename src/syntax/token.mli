@@ -31,6 +31,7 @@ type lexeme =
   | Concat
   | Not
   | Ref
+  | Size
   | Deref
   | LParen
   | RParen

@@ -160,6 +160,7 @@ and parse_unary parser =
     | Token.Sub -> Some Ast.Neg
     | Token.Ref -> Some Ast.Ref
     | Token.Deref -> Some Ast.Deref
+    | Token.Size -> Some Ast.Size
     | _ -> None
   in
   match unop with
