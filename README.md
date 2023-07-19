@@ -282,15 +282,15 @@ In addition to the four basic types, Nox also allows you to define and use more 
 A record is simply a collection of named fields containing values of arbitrary types. 
 They are similar to objects in Javascript or tables in Lua.
 
-A record is defined by enclosing a sequence of assignments of field names to values between `[` and `]`, with field declarations separated by commas.
+A record is defined by enclosing a sequence of assignments of field names to values between `{` and `}`, with field declarations separated by commas.
 It is possible to copy the fields of an existing record in a new one and extend it with new values by adding a `|` followed by the record expression whose fields must be copied at the end of a record declaration.
 A field in a record can be accessed by suffixing an expression denoting a record with a `.` followed by the field's name.
 
 For example, the following snippet declares two records `r0` and `r1`, where `r1` extends `r0` with a new field `z`, and adds the values of fields `y` and `z` in records `r0` and `r1`, respectively:
 
 ```
-let r0 = [x = 1, y = 3 b = true];
-let r1 = [z = 10 | r0];
+let r0 = {x = 1, y = 3 b = true};
+let r1 = {z = 10 | r0};
 r0.y + r1.z
 ```
 
@@ -298,7 +298,7 @@ When extending a record, it is also possible to overwrite the old value of a fie
 In the following snippet, the value of field `y` is overwritten, so the result of the field access is `true` and not `2`:
 
 ```
-[y = true | [x = 1, y = 2]].y
+{y = true | {x = 1, y = 2}}.y
 ```
 
 Records in Nox are *polymorphic*.
@@ -311,7 +311,7 @@ fun f(r) {
 }
 ```
 
-the compiler infers that `r` must be of type `[x : 'a | 'b]`, meaning that any record containing a field `x` of any type can be passed to the function as arguments, even if it has other fields (this aspect is visible in the `| 'b` part at the end of the inferred type: this means that the argument record can extend any other record, as long as it features a field `x`).
+the compiler infers that `r` must be of type `{x : 'a | 'b}`, meaning that any record containing a field `x` of any type can be passed to the function as arguments, even if it has other fields (this aspect is visible in the `| 'b` part at the end of the inferred type: this means that the argument record can extend any other record, as long as it features a field `x`).
 
 ### Variants
 
@@ -345,9 +345,30 @@ match :Some 42 {
 
 If the value being matched had been labelled with `:None`, the second arm would have been taken and the value `0` returned.
 
+### Arrays
+
+Arrays are fixed-size collections of values of the same type that can be accessed through their index in the sequence.
+
+An array is declared by enclosing a comma-separated sequence of expressions of the same type between brackets:
+```
+let array = [1, 1 + 2, 3 + 2, 5 + 2, 7 + 2];
+```
+
+Array indices are 0-based.
+To access the element at some index in an array, the array must be post-fixed with an expression of type `number` enclosed between brackets.
+For example, the element at index `2 + 2` in `array` is accessed with the expression:
+```
+array[2 + 2] // Returns '9'
+```
+
+The unary `#` operator can be used to retrieve the size of an array:
+```
+#array // Returns '5'
+```
+
 ### Blocks
 
-A block expression is simply a sequence of statements enclosed between `{` and `}`.
+A block expression is simply a sequence of statements enclosed between `{` and `}` and separated by semicolons.
 When it is executed, the statements it contains are evaluated and the value of the last one is returned.
 
 For example, the following snippet returns `true`:
@@ -412,14 +433,14 @@ For example, if we have the following module definition in a file called `vector
 
 ```
 fun add(v0, v1) {
-  [x = v0.x + v1.x, y = v0.y + v1.y]
+  {x = v0.x + v1.x, y = v0.y + v1.y}
 };
 
 fun dot(v0, v1) {
   v0.x * v1.x + v0.y * v1.y
 };
 
-[add = add, dot = dot]
+{add = add, dot = dot}
 ```
 
 Then it is possible to load the function definitions it exports and use them as follows:
@@ -427,9 +448,9 @@ Then it is possible to load the function definitions it exports and use them as 
 ```
 let vector2d = open "vector2d";
 
-let v0 = [x = 1, y = 2];
+let v0 = {x = 1, y = 2};
 
-let v1 = [x = 3, y = 10];
+let v1 = {x = 3, y = 10};
 
 print(num2str(vector2d.add(v0, v1).x)); // Prints "4.".
 
