@@ -33,6 +33,7 @@ print("The factorial of 5 is " .. num2str(fact(5)) .. ".")
     - [Basic types and operations](#basic-types-and-operations)
     - [Records](#records)
     - [Variants](#variants)
+    - [Arrays](#arrays)
     - [Blocks](#blocks)
     - [Conditional expressions](#conditional-expressions)
     - [Lambda expressions](#lambda-expressions)
@@ -259,7 +260,7 @@ Nox also includes a built-in function to convert `boolean` values to strings: `b
 
 ### Expressions
 
-In addition to the standard [operations on booleans, numbers and strings](#basic-types-and-operations), expressions in Nox can be [blocks of statements](#blocks), [conditional expressions](#conditional-expressions), [record instanciations](#records) and [accesses to record fields](#records), [variants and match expressions](#variants), [lambdas](#lambda-expressions) and [module opens](#modules).
+In addition to the standard [operations on booleans, numbers and strings](#basic-types-and-operations), expressions in Nox can be [blocks of statements](#blocks), [conditional expressions](#conditional-expressions), [record instanciations](#records) and [accesses to record fields](#records), [variants and match expressions](#variants), [arrays](#arrays), [lambdas](#lambda-expressions) and [module opens](#modules).
 
 ### Basic types and operations
 
